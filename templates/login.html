@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login | Telares Los Morros</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+  </head>
+
+  <body
+    class="min-h-screen bg-gradient-to-br from-indigo-900 via-indigo-800 to-indigo-700"
+  >
+    <!-- ================= HEADER ================= -->
+    <header class="header bg-white/90 backdrop-blur shadow-md">
+      <div
+        class="header-container max-w-7xl mx-auto px-6 py-3 flex items-center justify-between"
+      >
+        <!-- Logo / Empresa -->
+        <div class="logo-container flex items-center gap-3">
+          <div class="logo-icon bg-indigo-600 text-white rounded-lg p-2 shadow">
+            <i data-lucide="cloud" class="w-6 h-6"></i>
+          </div>
+          <div>
+            <h1 class="company-name text-lg font-bold text-gray-800">
+              Telares Los Morros
+            </h1>
+            <p class="company-subtitle text-sm text-gray-500">
+              Panel de Gestión de Red
+            </p>
+          </div>
+        </div>
+        <!-- Acciones -->
+        <div class="flex items-center gap-4">
+          <span class="text-sm text-gray-600 font-medium">
+            Optimización de la Red de Datos
+          </span>
+          <div class="text-xs text-gray-400">© 2025</div>
+        </div>
+      </div>
+    </header>
+    <!-- ========================================== -->
+
+    <!-- ================= LOGIN ================= -->
+    <main class="flex items-center justify-center px-4 py-16">
+      <div class="w-full max-w-md bg-white rounded-2xl shadow-2xl p-8">
+        <!-- Encabezado -->
+        <div class="text-center mb-8">
+          <div class="flex justify-center mb-4">
+            <div class="bg-indigo-600 text-white rounded-full p-4 shadow-lg">
+              <i data-lucide="network" class="w-8 h-8"></i>
+            </div>
+          </div>
+          <h1 class="text-2xl font-bold text-gray-800">Red</h1>
+          <p class="text-sm text-gray-500 mt-1">
+            Optimización de la Red de Datos<br />
+            <span class="font-medium">Telares Los Morros</span>
+          </p>
+        </div>
+
+        <!-- Formulario -->
+        <form id="loginForm" class="space-y-5">
+          <!-- Usuario -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1"
+              >Usuario</label
+            >
+            <div class="relative">
+              <span
+                class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400"
+              >
+                <i data-lucide="user" class="w-5 h-5"></i>
+              </span>
+              <input
+                type="text"
+                name="username"
+                required
+                placeholder="Ingrese su usuario"
+                class="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+              />
+            </div>
+          </div>
+
+          <!-- Contraseña -->
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">
+              Contraseña
+            </label>
+
+            <div class="relative">
+              <!-- Icono candado (izquierda) -->
+              <span
+                class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400"
+              >
+                <i data-lucide="lock" class="w-5 h-5"></i>
+              </span>
+
+              <!-- Input -->
+              <input
+                id="password"
+                type="password"
+                name="password"
+                required
+                placeholder="Ingrese su contraseña"
+                class="w-full pl-10 pr-10 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+              />
+
+              <!-- Icono ver/ocultar (derecha) -->
+              <button
+                type="button"
+                onclick="togglePassword()"
+                class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600"
+              >
+                <i id="eyeIcon" data-lucide="eye" class="w-5 h-5"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Error -->
+          <div
+            id="loginError"
+            class="hidden text-sm text-red-600 text-center"
+          ></div>
+
+          <!-- Botón -->
+          <button
+            type="submit"
+            class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg font-semibold flex items-center justify-center gap-2 transition"
+          >
+            <i data-lucide="log-in" class="w-5 h-5"></i>
+            Iniciar Sesión
+          </button>
+        </form>
+
+        <!-- Footer -->
+        <div class="mt-6 text-center text-xs text-gray-400">
+          © 2025 · Plataforma de Gestión y Visualización de Red
+        </div>
+      </div>
+    </main>
+    <!-- ========================================== -->
+    <script>
+      function togglePassword() {
+        const input = document.getElementById("password");
+        const icon = document.getElementById("eyeIcon");
+
+        if (input.type === "password") {
+          input.type = "text";
+          icon.setAttribute("data-lucide", "eye-off");
+        } else {
+          input.type = "password";
+          icon.setAttribute("data-lucide", "eye");
+        }
+
+        lucide.createIcons(); // refresca el icono
+      }
+    </script>
+    <!-- Script Login -->
+    <script>
+      lucide.createIcons();
+
+      const form = document.getElementById("loginForm");
+      const errorBox = document.getElementById("loginError");
+
+      // 🔴 URL DEL PANEL PRINCIPAL (FRONTEND)
+      const PANEL_URL = "/"; // ⬅️ AJUSTA SI ES NECESARIO
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        errorBox.classList.add("hidden");
+
+        const formData = new FormData(form);
+
+        // 🔎 DEBUG: datos enviados
+        console.log("📤 Enviando login:");
+        for (let [k, v] of formData.entries()) {
+          console.log(`   ${k}: ${v}`);
+        }
+
+        try {
+          console.log("🌐 Haciendo request al backend...");
+
+          const res = await fetch("https://telares.onrender.com/login", {
+            method: "POST",
+            body: formData,
+            credentials: "include", // 🔐 cookies/sesión
+          });
+
+          console.log("📥 Response status:", res.status);
+          console.log("📥 Response ok:", res.ok);
+
+          let data;
+          try {
+            data = await res.json();
+            console.log("📦 Response JSON:", data);
+          } catch (jsonErr) {
+            console.error("❌ Error parseando JSON:", jsonErr);
+            errorBox.textContent = "Respuesta inválida del servidor";
+            errorBox.classList.remove("hidden");
+            return;
+          }
+
+          if (res.ok && data.status === "success") {
+            console.log("✅ Login exitoso");
+
+            // ✅ REDIRECCIÓN CORRECTA AL FRONTEND
+            console.log("➡️ Redirigiendo a:", PANEL_URL);
+            window.location.replace(PANEL_URL);
+          } else {
+            console.warn("⚠️ Login fallido:", data);
+            errorBox.textContent =
+              data.message || `Error de login (HTTP ${res.status})`;
+            errorBox.classList.remove("hidden");
+          }
+        } catch (err) {
+          console.error("🔥 Error de red / fetch:", err);
+          errorBox.textContent = "Error de conexión con el servidor";
+          errorBox.classList.remove("hidden");
+        }
+      });
+    </script>
+  </body>
+</html>

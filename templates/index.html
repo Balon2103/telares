@@ -1,0 +1,1192 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Panel de Respaldo — Telares Los Morros</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link
+      href="https://unpkg.com/vis-network/styles/vis-network.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://unpkg.com/gridjs/dist/theme/mermaid.min.css"
+      rel="stylesheet"
+    />
+    <script src="https://unpkg.com/gridjs/dist/gridjs.umd.js"></script>
+    <link
+      href="https://unpkg.com/vis-network/styles/vis-network.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+    />
+    <link rel="stylesheet" href="../static/style.css" />
+  </head>
+
+  <body class="min-h-screen flex flex-col">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-container flex items-center justify-between">
+        <!-- Logo / Empresa -->
+        <div class="logo-container flex items-center gap-3">
+          <div class="logo-icon">
+            <i data-lucide="cloud" class="w-6 h-6"></i>
+          </div>
+          <div>
+            <h1 class="company-name">Telares Los Morros</h1>
+            <p class="company-subtitle">Panel de Gestión de Red</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-4">
+          {% if user %}
+          <div class="flex items-center gap-2 text-sm font-medium">
+            <i data-lucide="user"></i>
+            <div class="capitalize">{{ user.username }}</div>
+            <a
+              href="/logout"
+              class="flex items-center gap-1 text-white hover:text-red-600 transition ml-2"
+              title="Cerrar sesión"
+            >
+              <i data-lucide="log-out" class="w-8 h-8"></i>
+            </a>
+          </div>
+          {% else %}
+          <a href="/login" class="btn-login">
+            <i data-lucide="log-in" class="w-4 h-4"></i>
+            <span>Iniciar sesión</span>
+          </a>
+          {% endif %}
+        </div>
+      </div>
+    </header>
+
+    <main class="main-container">
+      <!-- Panel de Respaldo -->
+      <section class="card">
+        <div class="card-header">
+          <div>
+            <h2 class="section-title">
+              <i
+                data-lucide="database"
+                class="section-icon text-indigo-600"
+              ></i>
+              Panel de Respaldo
+            </h2>
+            <p class="card-description">
+              Administra y ejecuta respaldos de la base de datos y red.
+            </p>
+          </div>
+
+          <div class="flex flex-col gap-2 items-end">
+            <button id="backup-btn" class="btn-primary w-64">
+              <i data-lucide="save" class="btn-icon"></i>
+              Ejecutar Respaldo
+            </button>
+
+            <button id="schedule-btn" class="btn-primary w-64">
+              <i data-lucide="clock" class="btn-icon"></i>
+              Respaldo Automático
+            </button>
+          </div>
+        </div>
+
+        <div id="message" class="message-container"></div>
+      </section>
+      <div
+        id="scheduleModal"
+        class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden"
+      >
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
+          <!-- Header -->
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-semibold flex items-center gap-2">
+              <i data-lucide="clock" class="w-5 h-5 text-indigo-600"></i>
+              Respaldo Automático
+            </h2>
+            <button
+              id="closeScheduleModal"
+              class="text-gray-400 hover:text-gray-600"
+            >
+              <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+          </div>
+
+          <!-- Contenido -->
+          <form id="scheduleForm" class="space-y-4">
+            <!-- Activar -->
+            <div class="flex items-center justify-between">
+              <span class="text-sm font-medium text-gray-700">
+                Activar respaldo automático
+              </span>
+              <input
+                type="checkbox"
+                id="autoBackupEnabled"
+                class="w-5 h-5 accent-indigo-600"
+              />
+            </div>
+
+            <!-- Frecuencia -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">
+                Frecuencia
+              </label>
+              <select
+                id="backupFrequency"
+                class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500"
+              >
+                <option value="daily">Diario</option>
+                <option value="weekly">Semanal</option>
+                <option value="monthly">Mensual</option>
+              </select>
+            </div>
+
+            <!-- Hora -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">
+                Hora de ejecución
+              </label>
+              <input
+                type="time"
+                id="backupTime"
+                class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+
+            <!-- Botones -->
+            <div class="flex justify-end gap-3 pt-4">
+              <button
+                type="button"
+                id="cancelSchedule"
+                class="px-4 py-2 rounded-lg text-gray-600 hover:bg-gray-100"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                class="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 flex items-center gap-2"
+              >
+                <i data-lucide="save" class="w-4 h-4"></i>
+                Guardar
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+      <div class="stats-grid">
+        <div class="stats-card">
+          <i data-lucide="wifi" class="stats-icon"></i>
+          <div class="stats-value" id="network-status">Estable</div>
+          <div class="stats-label">Estatus General</div>
+        </div>
+
+        <div class="stats-card">
+          <i data-lucide="activity" class="stats-icon"></i>
+          <div class="stats-value" id="active-nodes">0</div>
+          <div class="stats-label">Nodos Activos</div>
+        </div>
+
+        <div class="stats-card">
+          <i data-lucide="trending-up" class="stats-icon"></i>
+          <div class="stats-value" id="network-load">0 Mbps</div>
+          <div class="stats-label">Tráfico Promedio</div>
+        </div>
+
+        <div class="stats-card">
+          <i data-lucide="calendar" class="stats-icon"></i>
+          <div class="stats-value" id="last-backup">--</div>
+          <div class="stats-label">Último Respaldo</div>
+        </div>
+      </div>
+
+      <!-- Registro de Nodos -->
+      <div class="card">
+        <h3 class="section-title">
+          <i data-lucide="server" class="section-icon text-blue-600"></i>
+          Registro de Nodos
+        </h3>
+
+        <form id="nodeForm" class="grid-form">
+          <input
+            type="text"
+            name="nombre"
+            placeholder="Nombre del nodo"
+            required
+            class="input-modern"
+          />
+          <input
+            type="text"
+            name="ip"
+            placeholder="Dirección IP"
+            required
+            class="input-modern"
+          />
+          <input
+            type="text"
+            name="ubicacion"
+            placeholder="Ubicación"
+            required
+            class="input-modern"
+          />
+          <select name="rol" required class="input-modern capitalize">
+            <option value="">Seleccionar Rol</option>
+            <option value="router">Router</option>
+            <option value="switch">Switch</option>
+            <option value="servidor">Servidor</option>
+            <option value="ordenador">Ordenador</option>
+          </select>
+          <button
+            type="submit"
+            class="btn-primary form-submit flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg shadow-sm hover:bg-indigo-700 transition"
+          >
+            <i data-lucide="plus-circle" class="w-5 h-5"></i>
+            <span>Agregar Nodo</span>
+          </button>
+        </form>
+
+        <div id="nodeMessage" class="node-message"></div>
+
+        <div id="grid-nodos" class="capitalize"></div>
+      </div>
+
+      <!-- Gráficos y Topología -->
+      <section class="charts-grid">
+        <div class="card" style="text-transform: capitalize">
+          <h3 class="section-title">
+            <i data-lucide="pie-chart" class="section-icon text-indigo-600"></i>
+            Distribución de Dispositivos
+          </h3>
+          <canvas id="chartDevices"></canvas>
+        </div>
+
+        <div class="card capitalize">
+          <!-- Header -->
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="section-title flex items-center gap-2">
+              <span
+                class="iconify text-blue-600"
+                data-icon="mdi:lan"
+                data-width="22"
+              ></span>
+              Topología de Red
+            </h3>
+
+            <button
+              id="export-img"
+              class="btn-primary flex items-center gap-2"
+              title="Exportar topología como imagen"
+            >
+              <i data-lucide="image" class="w-4 h-4"></i>
+              Exportar Imagen
+            </button>
+          </div>
+
+          <!-- Network -->
+          <div id="network" class="network-container"></div>
+        </div>
+      </section>
+
+      <!-- Respaldos disponibles -->
+      <section class="card">
+        <h3 class="section-title">
+          <i data-lucide="folder" class="section-icon text-amber-500"></i>
+          Respaldos disponibles
+        </h3>
+
+        <div class="table-container">
+          <table class="table-modern">
+            <thead>
+              <tr class="text-center">
+                <th>Archivo</th>
+                <th>Tamaño</th>
+                <th>Fecha</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="backup-body">
+              {% for b in backups %}
+              <tr>
+                <td class="font-medium">
+                  <!-- Icono de respaldo al lado izquierdo del nombre -->
+                  <i data-lucide="hard-drive" class="action-icon"></i>
+                  {{ b.name }}
+                </td>
+                <td>{{ b.size }}</td>
+                <td>{{ b.date }}</td>
+                <td class="text-center">
+                  <div class="actions-container">
+                    <a
+                      href="/download_backup/{{ b.name }}"
+                      class="action-btn action-download"
+                    >
+                      <i data-lucide="download" class="action-icon"></i>
+                      Descargar
+                    </a>
+                    <button
+                      onclick="deleteBackup('{{ b.name }}')"
+                      class="action-btn action-delete"
+                    >
+                      <i data-lucide="trash-2" class="action-icon"></i> Eliminar
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <div id="pagination" class="pagination-container"></div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      Optimizacion de la Red de Datos — Telares Los Morros
+    </footer>
+
+    <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://code.iconify.design/3/3.1.1/iconify.min.js"></script>
+    <script>
+      let currentPage = 1;
+      const backupsPerPage = 5;
+      let totalPages = 1;
+
+      let gridInstance = null;
+      let editNodeId = null;
+      let network = null;
+      let savedPositions = {};
+      let netvisLoaded = false;
+      // Referencias DOM (se llenan luego)
+      let gridContainer = null;
+      let tbodyBackups = null;
+      let pagination = null;
+      let linkingFromNode = null;
+      let tempEdgeId = "__temp_edge__";
+
+      document.addEventListener("DOMContentLoaded", async () => {
+        lucide.createIcons();
+        async function checkSession() {
+          try {
+            const res = await fetch("/session"); // endpoint de sesión
+            if (!res.ok) return;
+
+            const data = await res.json();
+
+            if (data.authenticated) {
+              // Ocultar botón login
+              document.getElementById("login-btn").classList.add("hidden");
+
+              // Mostrar usuario
+              const userInfo = document.getElementById("user-info");
+              const usernameSpan = document.getElementById("username");
+
+              usernameSpan.textContent = data.username;
+              userInfo.classList.remove("hidden");
+
+              lucide.createIcons();
+            }
+          } catch (err) {
+            console.warn("Sesión no activa");
+          }
+        }
+
+        document.addEventListener("DOMContentLoaded", checkSession);
+
+        const btnBackup = document.getElementById("backup-btn");
+        const tbodyBackups = document.getElementById("backup-body");
+        const pagination = document.getElementById("pagination");
+        const msg = document.getElementById("message");
+        const nodeForm = document.getElementById("nodeForm");
+        const gridContainer = document.getElementById("grid-nodos");
+
+        const NODE_STYLE_MAP = {
+          router: {
+            color: {
+              background: "#ef4444",
+              border: "#b91c1c",
+              highlight: { background: "#f87171", border: "#7f1d1d" },
+            },
+            shape: "triangle",
+          },
+          switch: {
+            color: {
+              background: "#3b82f6",
+              border: "#1d4ed8",
+              highlight: { background: "#60a5fa", border: "#1e40af" },
+            },
+            shape: "box",
+          },
+          servidor: {
+            color: {
+              background: "#10b981",
+              border: "#047857",
+              highlight: { background: "#34d399", border: "#065f46" },
+            },
+            shape: "ellipse",
+          },
+          pc: {
+            color: {
+              background: "#8b5cf6",
+              border: "#6d28d9",
+              highlight: { background: "#a78bfa", border: "#5b21b6" },
+            },
+            shape: "dot",
+          },
+          desconocido: {
+            color: {
+              background: "#9ca3af",
+              border: "#6b7280",
+            },
+            shape: "dot",
+          },
+        };
+
+        if (btnBackup) {
+          btnBackup.addEventListener("click", async () => {
+            msg.innerHTML =
+              '<span class="status-info"><i data-lucide="loader-2" class="status-icon animate-spin"></i> Ejecutando respaldo...</span>';
+            lucide.createIcons();
+            try {
+              const res = await fetch("/backup");
+              const data = await res.json();
+              msg.innerHTML =
+                data.status === "success"
+                  ? `<span class="status-success"><i data-lucide="check-circle" class="status-icon"></i> ${data.message}</span>`
+                  : `<span class="status-error"><i data-lucide="alert-circle" class="status-icon"></i> ${data.message}</span>`;
+              lucide.createIcons();
+
+              if (data.status === "success") {
+                await loadBackups();
+                await loadNodes();
+              }
+            } catch {
+              msg.innerHTML =
+                "<span class='status-error'><i data-lucide='alert-triangle' class='status-icon'></i> Error al ejecutar el backup.</span>";
+              lucide.createIcons();
+            }
+          });
+        }
+
+        async function loadBackups() {
+          if (!tbodyBackups) return;
+
+          tbodyBackups.innerHTML =
+            '<tr><td colspan="4" class="status-info"><i data-lucide="loader-2" class="status-icon animate-spin"></i> Cargando respaldos...</td></tr>';
+          pagination.innerHTML = "";
+          lucide.createIcons();
+
+          try {
+            const res = await fetch("/list_backups");
+            const data = await res.json();
+
+            if (data.status === "success" && data.files.length > 0) {
+              // Ordenar por fecha (más reciente primero)
+              const filesSorted = [...data.files].sort((a, b) => {
+                const dateA = new Date(a.date || 0);
+                const dateB = new Date(b.date || 0);
+                return dateB - dateA;
+              });
+
+              totalPages = Math.ceil(filesSorted.length / backupsPerPage);
+              const start = (currentPage - 1) * backupsPerPage;
+              const end = start + backupsPerPage;
+              const pageFiles = filesSorted.slice(start, end);
+
+              // Construcción de filas con iconos modernos
+              tbodyBackups.innerHTML = pageFiles
+                .map(
+                  (file) => `
+                 <tr class="text-center">
+         <td class="font-medium text-center">${file.name || file}</td>
+         <td class="text-center">${file.size || "--"}</td>
+         <td class="text-center">${file.date || "--"}</td>
+         <td class="text-center">
+           <div class="flex justify-center items-center gap-3">
+             <a
+               href="/download_backup/${file.name || file}"
+               class="action-btn action-download flex items-center gap-1"
+               title="Descargar respaldo"
+             >
+               <i data-lucide="download" class="action-icon"></i> Descargar
+             </a>
+
+             <button
+               onclick="deleteBackup('${file.name || file}')"
+               class="action-btn action-delete flex items-center gap-1"
+               title="Eliminar respaldo"
+             >
+               <i data-lucide="trash-2" class="action-icon"></i> Eliminar
+             </button>
+           </div>
+         </td>
+       </tr>`,
+                )
+                .join("");
+
+              // Paginación
+              pagination.innerHTML = `
+               <div class="pagination-controls">
+                 <button class="pagination-btn prev" ${
+                   currentPage === 1 ? "disabled" : ""
+                 } onclick="prevPage()">
+                   <i data-lucide="chevron-left"></i> Anterior
+                 </button>
+
+                 <span class="pagination-info">
+         Página <strong class="mx-1">${currentPage}</strong> de
+         <strong class="mx-1">${totalPages}</strong>
+       </span>
+
+                 <button class="pagination-btn next" ${
+                   currentPage === totalPages ? "disabled" : ""
+                 } onclick="nextPage()">
+                   Siguiente <i data-lucide="chevron-right"></i>
+                 </button>
+               </div>
+             `;
+
+              lucide.createIcons();
+            } else {
+              tbodyBackups.innerHTML =
+                '<tr><td colspan="4">No hay respaldos disponibles.</td></tr>';
+              pagination.innerHTML = "";
+            }
+          } catch (err) {
+            console.error("Error cargando respaldos:", err);
+            tbodyBackups.innerHTML =
+              '<tr><td colspan="4">Error al cargar respaldos.</td></tr>';
+            pagination.innerHTML = "";
+          }
+        }
+
+        window.prevPage = () => {
+          if (currentPage > 1) {
+            currentPage--;
+            loadBackups();
+          }
+        };
+
+        window.nextPage = () => {
+          if (currentPage < totalPages) {
+            currentPage++;
+            loadBackups();
+          }
+        };
+
+        window.deleteBackup = async (file) => {
+          if (!confirm(`¿Eliminar el respaldo "${file}"?`)) return;
+
+          try {
+            const res = await fetch(
+              `/delete_backup/${encodeURIComponent(file)}`,
+              { method: "DELETE" },
+            );
+
+            const data = await res.json();
+
+            if (data.status === "success") {
+              alert("Respaldo eliminado correctamente");
+              await loadBackups();
+            } else {
+              alert(data.message || "Error al eliminar respaldo");
+            }
+          } catch {
+            alert("Error al conectar con el servidor o eliminar respaldo");
+          }
+        };
+
+        await loadBackups();
+
+        // Cargar nodos
+        // =====================
+        // 🔹 Exponer la función para que pueda llamarse desde el formulario
+        window.loadNodes = async function loadNodes() {
+          try {
+            const res = await fetch("/get_nodes");
+            const data = await res.json();
+
+            if (data.status !== "success" || !Array.isArray(data.nodes)) {
+              gridContainer.innerHTML =
+                "<p class='status-error'>Error al cargar nodos.</p>";
+              return;
+            }
+
+            if (gridInstance) {
+              gridInstance.destroy();
+              gridContainer.innerHTML = "";
+            }
+
+            const rows = data.nodes.map((n) => [
+              n.id ?? "-",
+              n.nombre ?? "-",
+              n.ip ?? "-",
+              n.ubicacion ?? "-",
+              n.rol ?? "-",
+            ]);
+
+            if (rows.length === 0) {
+              gridContainer.innerHTML =
+                "<p class='status-info'>No hay nodos registrados.</p>";
+              return;
+            }
+
+            gridInstance = new gridjs.Grid({
+              columns: [
+                "ID",
+                "Nombre",
+                "IP",
+                "Ubicación",
+                "Rol",
+                {
+                  name: "Acciones",
+                  formatter: (_, row) =>
+                    gridjs.html(`
+               <div class="grid-actions flex gap-2">
+                 <button onclick="editNode(${row.cells[0].data})">
+                   <i class="fa-solid fa-pen-to-square"></i>
+                 </button>
+                 <button onclick="deleteNode(${row.cells[0].data})">
+                   <i class="fa-solid fa-trash-can"></i>
+                 </button>
+               </div>
+             `),
+                },
+              ],
+              data: rows,
+              search: true,
+              pagination: { enabled: true, limit: 5 },
+              sort: true,
+            }).render(gridContainer);
+
+            loadDeviceChart(data.nodes);
+            await loadNetVisTopology();
+          } catch (err) {
+            console.error(err);
+            gridContainer.innerHTML =
+              "<p class='status-error'>Error de conexión al servidor.</p>";
+          }
+        };
+        await loadNodes(); 
+        // =====================
+        async function loadNetVisTopology(force = false) {
+          if (netvisLoaded && !force) return;
+          netvisLoaded = true;
+          const container = document.getElementById("network");
+          if (!container) return;
+
+          // Mensaje inicial
+          container.innerHTML =
+            "<p class='status-info text-center'>Cargando topología...</p>";
+
+          try {
+            const res = await fetch("/netbox_api/get_netvis_data");
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+            const data = await res.json();
+            console.log("NETVIS DATA:", data);
+
+            // 🔒 Validaciones fuertes
+            if (
+              !data ||
+              data.status !== "success" ||
+              !Array.isArray(data.nodes) ||
+              !Array.isArray(data.edges)
+            ) {
+              throw new Error("Formato inválido de NetVis");
+            }
+
+            // ⚠️ NetBox vacío
+            if (data.nodes.length === 0) {
+              container.innerHTML =
+                "<p class='status-info text-center'>No hay dispositivos registrados</p>";
+              updateStats([]); // stats en cero
+              return;
+            }
+
+            // =========================
+            // 🎨 NODOS CON ESTILO POR ROL
+            // =========================
+            const styledNodes = data.nodes.map((n) => {
+              const rol = (n.rol || "desconocido").toLowerCase();
+              const style = NODE_STYLE_MAP[rol] || NODE_STYLE_MAP.desconocido;
+
+              return {
+                id: n.id,
+                label: n.label || n.nombre || `Nodo ${n.id}`,
+                title: n.title || n.label || n.nombre || "",
+                shape: style.shape,
+                color: style.color,
+                x: typeof n.x === "number" ? n.x : undefined,
+                y: typeof n.y === "number" ? n.y : undefined,
+                fixed: n.fixed ?? false,
+                font: {
+                  color: "#111827",
+                  size: 14,
+                  face: "Inter",
+                },
+              };
+            });
+
+            // ✅ USAR SOLO styledNodes
+            const nodes = new vis.DataSet(styledNodes);
+
+            const edges = new vis.DataSet(data.edges);
+
+            // =========================
+            // ⚙️ OPCIONES (SIN SHAPE GLOBAL)
+            // =========================
+            const options = {
+              layout: { improvedLayout: true },
+              physics: {
+                enabled: true,
+                stabilization: true,
+              },
+              interaction: {
+                hover: true,
+                dragNodes: true,
+              },
+              nodes: {
+                borderWidth: 2,
+                shadow: true,
+              },
+              edges: {
+                color: { color: "#94a3b8" },
+                smooth: true,
+              },
+            };
+
+            // Destruir red anterior
+            if (network) network.destroy();
+
+            // Crear red
+            network = new vis.Network(container, { nodes, edges }, options);
+            let selectedNodes = [];
+            await autoCreateLinks();
+            await loadNetVisTopology();
+            network.on("dragStart", function (params) {
+              if (params.nodes.length === 1) {
+                linkingFromNode = params.nodes[0];
+              }
+            });
+            network.on("dragEnd", function (params) {
+              if (!linkingFromNode) return;
+
+              // quitar línea temporal
+              if (edges.get(tempEdgeId)) {
+                edges.remove(tempEdgeId);
+              }
+
+              // ¿soltó sobre otro nodo?
+              if (params.nodes.length === 1) {
+                const targetNode = params.nodes[0];
+
+                if (targetNode !== linkingFromNode) {
+                  createLink(linkingFromNode, targetNode);
+                }
+              }
+
+              linkingFromNode = null;
+            });
+            network.on("click", function (params) {
+              if (params.nodes.length === 1) {
+                const nodeId = params.nodes[0];
+
+                if (!selectedNodes.includes(nodeId)) {
+                  selectedNodes.push(nodeId);
+                }
+
+                if (selectedNodes.length === 2) {
+                  createLink(selectedNodes[0], selectedNodes[1]);
+                  selectedNodes = [];
+                }
+              }
+            });
+
+            network.on("selectNode", async (params) => {
+              selectedNodes = params.nodes;
+
+              if (selectedNodes.length === 2) {
+                const [from, to] = selectedNodes;
+
+                // 🧠 Evitar auto-enlace
+                if (from === to) {
+                  network.unselectAll();
+                  return;
+                }
+
+                // 1️⃣ Enlace visual inmediato
+                edges.add({
+                  from: e.from,
+                  to: e.to,
+                  label: "Auto",
+                  color: { color: "#22c55e" }, // verde
+                  dashes: true,
+                });
+
+                // 2️⃣ Guardar enlace en backend
+                const formData = new FormData();
+                formData.append("origen", from);
+                formData.append("destino", to);
+                formData.append("tipo", "Ethernet");
+                formData.append("ancho_banda", "1Gbps");
+
+                try {
+                  const res = await fetch("/add_link", {
+                    method: "POST",
+                    body: formData,
+                  });
+
+                  const data = await res.json();
+                  if (data.status !== "success") {
+                    console.error("Error guardando enlace:", data.message);
+                  }
+                } catch (err) {
+                  console.error("Error de red al crear enlace:", err);
+                }
+
+                // 3️⃣ Limpiar selección
+                network.unselectAll();
+                selectedNodes = [];
+              }
+            });
+            async function autoCreateLinks() {
+              await fetch("/auto_create_links", {
+                method: "POST",
+              });
+            }
+            // =========================
+            // 📊 ACTUALIZAR ESTADÍSTICAS
+            // =========================
+            updateStats(styledNodes);
+
+            // =========================
+            // 📌 CARGAR POSICIONES GUARDADAS
+            // =========================
+            const stored = localStorage.getItem("network_positions");
+            if (stored) {
+              const positions = JSON.parse(stored);
+              Object.entries(positions).forEach(([id, pos]) => {
+                nodes.update({
+                  id: Number(id),
+                  x: pos.x,
+                  y: pos.y,
+                  fixed: true,
+                });
+              });
+            }
+
+            // =========================
+            // 💾 GUARDAR POSICIONES AL MOVER
+            // =========================
+            network.on("dragEnd", (params) => {
+              params.nodes.forEach((nodeId) => {
+                const pos = network.getPositions([nodeId])[nodeId];
+                nodes.update({
+                  id: nodeId,
+                  x: pos.x,
+                  y: pos.y,
+                  fixed: true,
+                });
+                savedPositions[nodeId] = { x: pos.x, y: pos.y };
+              });
+
+              localStorage.setItem(
+                "network_positions",
+                JSON.stringify(savedPositions),
+              );
+            });
+          } catch (err) {
+            console.error("Error cargando NetVis:", err);
+            container.innerHTML =
+              "<p class='status-error text-center'>Error al cargar la topología NetBox</p>";
+            updateStats([]);
+          }
+        }
+        window.loadNetVisTopology = loadNetVisTopology;
+      });
+
+      /* ============================
+          GRÁFICO DE DISPOSITIVOS
+       ============================ */
+      function loadDeviceChart(nodes) {
+        const ctx = document.getElementById("chartDevices");
+        if (!ctx) return;
+
+        const rolesCount = nodes.reduce((acc, n) => {
+          const rol = n.rol ? n.rol.toLowerCase() : "desconocido";
+          acc[rol] = (acc[rol] || 0) + 1;
+          return acc;
+        }, {});
+
+        const labels = Object.keys(rolesCount);
+        const data = Object.values(rolesCount);
+
+        if (window.deviceChart) window.deviceChart.destroy();
+
+        window.deviceChart = new Chart(ctx, {
+          type: "doughnut",
+          data: {
+            labels,
+            datasets: [
+              {
+                label: "Cantidad de dispositivos",
+                data,
+                borderWidth: 1,
+                backgroundColor: [
+                  "#4f46e5",
+                  "#0ea5e9",
+                  "#10b981",
+                  "#f59e0b",
+                  "#ef4444",
+                  "#8b5cf6",
+                ],
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: {
+                position: "bottom",
+                labels: { usePointStyle: true, padding: 15 },
+              },
+            },
+          },
+        });
+      }
+      async function loadInitialStats() {
+        try {
+          const res = await fetch("/get_nodes");
+          const data = await res.json();
+
+          if (data.status === "success" && Array.isArray(data.nodes)) {
+            updateStats(data.nodes);
+          } else {
+            updateStats([]);
+          }
+        } catch (e) {
+          console.error("Error cargando estadísticas iniciales", e);
+          updateStats([]);
+        }
+        await loadInitialStats();
+      }
+      async function createLink(origen, destino) {
+        const form = new FormData();
+        form.append("origen", origen);
+        form.append("destino", destino);
+        form.append("tipo", "ethernet");
+        form.append("ancho_banda", "1Gbps");
+
+        const res = await fetch("/add_link", {
+          method: "POST",
+          body: form,
+        });
+
+        const data = await res.json();
+
+        if (data.status === "success") {
+          loadNetVisTopology(); // 🔄 recargar red
+        } else {
+          alert(data.message);
+        }
+      }
+      async function updateStats(nodes = []) {
+        try {
+          if (!Array.isArray(nodes)) nodes = [];
+
+          const totalNodes = nodes.length;
+          const activeNodes = totalNodes;
+
+          let networkStatus = "Estable";
+          if (totalNodes === 0) networkStatus = "Sin nodos";
+          else if (totalNodes < 3) networkStatus = "Inestable";
+
+          let avgTraffic = "0.0";
+
+          try {
+            const resTraffic = await fetch("/network/traffic");
+            const trafficData = await resTraffic.json();
+
+            avgTraffic = trafficData.traffic_mbps.toFixed(1);
+          } catch (e) {
+            avgTraffic = "0.0";
+          }
+
+          // 🔹 Backups
+          const resBackups = await fetch("/list_backups");
+          const dataBackups = await resBackups.json();
+
+          const getLatestBackup = (files = []) => {
+            let latest = null;
+
+            files.forEach((f) => {
+              if (!f.date) return;
+              const d = new Date(f.date);
+              if (!latest || d > latest) latest = d;
+            });
+
+            return latest ? latest.toLocaleDateString("es-ES") : "--";
+          };
+
+          const lastBackup =
+            dataBackups.status === "success"
+              ? getLatestBackup(dataBackups.files)
+              : "--";
+
+          // 🔹 UI
+          document.getElementById("active-nodes").textContent = activeNodes;
+          document.getElementById("network-status").textContent = networkStatus;
+          document.getElementById("network-load").textContent =
+            `${avgTraffic} Mbps`;
+          document.getElementById("last-backup").textContent = lastBackup;
+        } catch (error) {
+          console.error("Error actualizando estadísticas:", error);
+        }
+      }
+      document.getElementById("export-img").onclick = () => {
+        const canvas = document.querySelector("#network canvas");
+        const link = document.createElement("a");
+        link.href = canvas.toDataURL("image/png");
+        link.download = "topologia_red.png";
+        link.click();
+      };
+    </script>
+    <script>
+      window.editNode = async function (nodeId) {
+        const nuevoNombre = prompt("Nuevo nombre del nodo:");
+        if (!nuevoNombre) return;
+
+        const nuevoRol = prompt("Nuevo rol (router, switch, servidor, pc):");
+        if (!nuevoRol) return;
+
+        const res = await fetch(`/update_node/${nodeId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            nombre: nuevoNombre,
+            rol: nuevoRol,
+          }),
+        });
+
+        const data = await res.json();
+
+        if (data.status !== "success") {
+          alert(data.message || "Error al editar nodo");
+          return;
+        }
+
+        await loadNodes();
+        await loadNetVisTopology();
+      };
+      // =========================
+      // ELIMINAR NODO
+      // =========================
+      window.deleteNode = async function (nodeId) {
+        if (!confirm("¿Eliminar nodo?")) return;
+
+        const res = await fetch(`/delete_node/${nodeId}`, {
+          method: "DELETE",
+        });
+
+        if (!res.ok) {
+          alert("Error al eliminar");
+          return;
+        }
+
+        await loadNodes();
+        await loadNetVisTopology();
+      };
+    </script>
+    <script>
+      document
+        .getElementById("nodeForm")
+        .addEventListener("submit", async (e) => {
+          e.preventDefault();
+
+          const form = e.target;
+
+          const data = {
+            nombre: form.nombre.value,
+            ip: form.ip.value,
+            ubicacion: form.ubicacion.value,
+            rol: form.rol.value,
+          };
+
+          try {
+            const res = await fetch("/add_node", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(data),
+            });
+
+            const result = await res.json();
+
+            if (result.status !== "success") {
+              alert(result.message);
+              return;
+            }
+
+            form.reset();
+
+            // 🔥 AHORA SÍ EXISTE
+            await loadNodes();
+          } catch (err) {
+            console.error("Error agregando nodo:", err);
+          }
+        });
+    </script>
+    <script>
+      const scheduleBtn = document.getElementById("schedule-btn");
+      const scheduleModal = document.getElementById("scheduleModal");
+      const closeScheduleModal = document.getElementById("closeScheduleModal");
+      const cancelSchedule = document.getElementById("cancelSchedule");
+      const scheduleForm = document.getElementById("scheduleForm");
+
+      scheduleBtn?.addEventListener("click", () => {
+        scheduleModal.classList.remove("hidden");
+      });
+
+      closeScheduleModal?.addEventListener("click", () => {
+        scheduleModal.classList.add("hidden");
+      });
+
+      cancelSchedule?.addEventListener("click", () => {
+        scheduleModal.classList.add("hidden");
+      });
+
+      // Guardar configuración (mock)
+      scheduleForm?.addEventListener("submit", (e) => {
+        e.preventDefault();
+
+        const config = {
+          enabled: document.getElementById("autoBackupEnabled").checked,
+          frequency: document.getElementById("backupFrequency").value,
+          time: document.getElementById("backupTime").value,
+        };
+
+        console.log("Configuración respaldo automático:", config);
+
+        // 👉 Aquí luego llamas a tu API
+        // fetch("/schedule_backup", { ... })
+
+        alert("Configuración guardada correctamente");
+        scheduleModal.classList.add("hidden");
+      });
+
+      lucide.createIcons();
+    </script>
+  </body>
+</html>
