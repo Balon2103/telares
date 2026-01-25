@@ -19,7 +19,7 @@ import time
 
 app = FastAPI()
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-
+templates = Jinja2Templates(directory="dashboard/templates")
 # Configurar templates y archivos estáticos
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
