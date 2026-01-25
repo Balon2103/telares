@@ -138,8 +138,8 @@ async def home(request: Request):
     print("🧠 SESSION:", dict(request.session))
 
     user = request.session.get("user")
-    # if not user:
-    #     return RedirectResponse("/login", status_code=302)
+    if not user:
+        return RedirectResponse("/login", status_code=302)
 
     backups = []
     if os.path.exists(BACKUP_DIR):
@@ -226,10 +226,7 @@ async def download_backup(filename: str):
     if not os.path.exists(path):
         return JSONResponse(content={"status": "error", "message": "Archivo no encontrado"})
     return FileResponse(path, filename=filename)
-app.add_middleware(
-    SessionMiddleware,
-    secret_key="netvis-telares-los-morros"
-)
+
 def create_netbox_device(nombre, rol):
     # Resolver IDs reales desde NetBox
     site_id = get_site_id("Principal")
@@ -261,35 +258,6 @@ def create_netbox_device(nombre, rol):
 
     return res.json()["id"]
 
-def get_snmp_traffic(ip, community="public", if_index=1):
-    def snmp_get(oid):
-        iterator = getCmd(
-            SnmpEngine(),
-            CommunityData(community, mpModel=1),
-            UdpTransportTarget((ip, 161), timeout=2, retries=1),
-            ContextData(),
-            ObjectType(ObjectIdentity(oid))
-        )
-        errorIndication, errorStatus, _, varBinds = next(iterator)
-        if errorIndication or errorStatus:
-            raise Exception("SNMP error")
-        return int(varBinds[0][1])
-
-    in_oid = f"1.3.6.1.2.1.2.2.1.10.{if_index}"
-    out_oid = f"1.3.6.1.2.1.2.2.1.16.{if_index}"
-
-    in1 = snmp_get(in_oid)
-    out1 = snmp_get(out_oid)
-
-    time.sleep(1)
-
-    in2 = snmp_get(in_oid)
-    out2 = snmp_get(out_oid)
-
-    in_mbps = (in2 - in1) / 1024 / 1024
-    out_mbps = (out2 - out1) / 1024 / 1024
-
-    return round(in_mbps + out_mbps, 2)
 
 @app.get("/logout")
 async def logout(request: Request):
@@ -335,7 +303,7 @@ def get_session(request: Request):
 
     return {
         "authenticated": True,
-        "username": user["username"]
+        "username": user
     }
 @app.post("/add_node")
 async def add_node(request: Request):
