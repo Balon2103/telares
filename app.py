@@ -45,7 +45,8 @@ DEVICE_TYPE_MAP = {
     "servidor": "Servidor",
     "ordenador": "Ordenador",
 }
-
+if os.path.isdir("static"):
+    app.mount("/static", StaticFiles(directory="static"), name="static")
 # === Conexión a la base de datos PostgreSQL ===
 def get_connection():
     return psycopg2.connect(
