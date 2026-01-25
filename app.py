@@ -27,7 +27,7 @@ app.add_middleware(
     SessionMiddleware,
     secret_key="super-secret-key",
     same_site="none",
-    https_only=True
+    https_only=False
 )
 BACKUP_DIR = "/backups"
 NETBOX_URL = os.getenv(
