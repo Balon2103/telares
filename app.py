@@ -285,46 +285,6 @@ async def logout(request: Request):
     return RedirectResponse("/login", status_code=302)
 
 @app.post("/login")
-async def login_user(
-    request: Request,
-    username: str = Form(...),
-    password: str = Form(...)
-):
-    try:
-        conn = get_connection()
-        cur = conn.cursor(cursor_factory=RealDictCursor)
-
-        # 🔎 Buscar usuario
-        cur.execute(
-            "SELECT username, password_hash FROM users WHERE username = %s",
-            (username,)
-        )
-        user = cur.fetchone()
-
-        cur.close()
-        conn.close()
-
-        # ❌ Usuario o contraseña incorrectos
-        if not user or password != user["password_hash"]:
-            return {
-                "status": "error",
-                "message": "Credenciales inválidas"
-            }
-
-        # ✅ Login OK → guardar sesión
-        request.session["user"] = {
-            "username": user["username"]
-        }
-
-        return {"status": "success"}
-
-    except Exception as e:
-        print("LOGIN ERROR:", e)
-        return {
-            "status": "error",
-            "message": "Error interno del servidor"
-        }
-@app.post("/login")
 async def login(request: Request):
     try:
         form = await request.form()
