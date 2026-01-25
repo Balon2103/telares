@@ -130,6 +130,8 @@ async def home(request: Request):
     """Página principal con listado de backups y gráfico"""
 
     # 🔐 1️⃣ Verificar sesión
+    print("🧠 SESSION:", dict(request.session))
+
     user = request.session.get("user")
     if not user:
         return RedirectResponse("/login", status_code=302)
