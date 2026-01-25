@@ -23,7 +23,12 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 # Configurar templates y archivos estáticos
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
-
+app.add_middleware(
+    SessionMiddleware,
+    secret_key="super-secret-key",
+    same_site="none",
+    https_only=True
+)
 BACKUP_DIR = "/backups"
 NETBOX_URL = os.getenv(
     "NETBOX_URL",
@@ -164,7 +169,12 @@ async def home(request: Request):
             "user": user,  # 👈 IMPORTANTE
         },
     )
-
+@app.get("/login", response_class=HTMLResponse)
+async def login_page(request: Request):
+    return templates.TemplateResponse(
+        "login.html",
+        {"request": request}
+    )
 @app.get("/backup")
 async def manual_backup():
     """Ejecuta el backup manualmente (modo único)."""
