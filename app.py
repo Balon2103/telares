@@ -22,7 +22,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # Configurar templates y archivos estáticos
 app.mount("/static", StaticFiles(directory="static"), name="static")
-templates = Jinja2Templates(directory="dashboard/templates")
+templates = Jinja2Templates(directory="templates")
 app.add_middleware(
     SessionMiddleware,
     secret_key="super-secret-key",
@@ -138,8 +138,8 @@ async def home(request: Request):
     print("🧠 SESSION:", dict(request.session))
 
     user = request.session.get("user")
-    if not user:
-        return RedirectResponse("/login", status_code=302)
+    # if not user:
+    #     return RedirectResponse("/login", status_code=302)
 
     backups = []
     if os.path.exists(BACKUP_DIR):
