@@ -45,8 +45,17 @@ DEVICE_TYPE_MAP = {
     "servidor": "Servidor",
     "ordenador": "Ordenador",
 }
-if os.path.isdir("static"):
-    app.mount("/static", StaticFiles(directory="static"), name="static")
+from fastapi.middleware.cors import CORSMiddleware
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "https://telares-morros.vercel.app"
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 # === Conexión a la base de datos PostgreSQL ===
 def get_connection():
     return psycopg2.connect(
