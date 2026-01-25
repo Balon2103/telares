@@ -1,0 +1,867 @@
+from fastapi import FastAPI, Request, Response, UploadFile, File, Form
+from fastapi.responses import HTMLResponse, FileResponse, JSONResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+import os
+import subprocess
+import psycopg2
+import csv
+import json
+import requests
+from starlette.middleware.sessions import SessionMiddleware
+from psycopg2.extras import RealDictCursor
+import urllib3
+from pysnmp.hlapi import *
+import time
+
+
+
+
+app = FastAPI()
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+# Configurar templates y archivos estáticos
+app.mount("/static", StaticFiles(directory="static"), name="static")
+templates = Jinja2Templates(directory="templates")
+
+BACKUP_DIR = "/backups"
+NETBOX_URL = os.getenv(
+    "NETBOX_URL",
+    "https://vcca1890.cloud.netboxapp.com/api/"
+)
+
+NETBOX_API_TOKEN = os.getenv(
+    "NETBOX_API_TOKEN",
+    "77871449c1a5fb13a81aa12d4e4632bea4490bc9"
+)
+
+HEADERS = {
+    "Authorization": f"Token {NETBOX_API_TOKEN}",
+    "Accept": "application/json",
+}
+DEVICE_TYPE_MAP = {
+    "router": "Router",
+    "switch": "Switch",
+    "servidor": "Servidor",
+    "ordenador": "Ordenador",
+}
+
+# === Conexión a la base de datos PostgreSQL ===
+def get_connection():
+    return psycopg2.connect(
+        host=os.getenv("DB_HOST", "postgres_telares"),
+        dbname=os.getenv("DB_NAME", "telares_db"),
+        user=os.getenv("DB_USER", "postgres"),
+        password=os.getenv("DB_PASSWORD", "1234")
+    )
+def get_site_id(site_name="Principal"):
+    r = requests.get(
+        f"{NETBOX_URL}dcim/sites/",
+        headers=HEADERS,
+        params={"name": site_name},
+        timeout=10,
+        verify=True
+    )
+    r.raise_for_status()
+
+    results = r.json().get("results", [])
+    if not results:
+        raise Exception(f"Site '{site_name}' no existe en NetBox")
+
+    return results[0]["id"]
+def get_role_id(role_name):
+    r = requests.get(
+        f"{NETBOX_URL}dcim/device-roles/",
+        headers=HEADERS,
+        params={"name": role_name.capitalize()},
+        timeout=10,
+        verify=False
+    )
+    r.raise_for_status()
+
+    results = r.json().get("results", [])
+    if not results:
+        raise Exception(f"Device Role '{role_name}' no existe en NetBox")
+
+    return results[0]["id"]
+def get_device_type_id(model_name):
+    r = requests.get(
+        f"{NETBOX_URL}dcim/device-types/",
+        headers=HEADERS,
+        params={"model": model_name},
+        timeout=10,
+        verify=False
+    )
+    r.raise_for_status()
+
+    results = r.json().get("results", [])
+    if not results:
+        raise Exception(f"Device Type '{model_name}' no existe en NetBox")
+
+    return results[0]["id"]
+def resolve_netbox_ids(rol):
+    site_id = get_site_id("Principal")
+    role_id = get_role_id(rol)
+
+    model_name = DEVICE_TYPE_MAP.get(rol)
+    if not model_name:
+        raise Exception(f"Rol '{rol}' no soportado")
+
+    device_type_id = get_device_type_id(model_name)
+
+    return {
+        "site_id": site_id,
+        "role_id": role_id,
+        "device_type_id": device_type_id
+    }
+# === Página principal ===
+@app.get("/", response_class=HTMLResponse)
+async def home(request: Request):
+    """Página principal con listado de backups y gráfico"""
+
+    # 🔐 1️⃣ Verificar sesión
+    user = request.session.get("user")
+    if not user:
+        return RedirectResponse("/login", status_code=302)
+
+    backups = []
+    if os.path.exists(BACKUP_DIR):
+        for file in sorted(os.listdir(BACKUP_DIR)):
+            if file.endswith(".sql"):
+                path = os.path.join(BACKUP_DIR, file)
+                size = round(os.path.getsize(path) / 1024, 2)
+                date_str = file.replace("backup_", "").replace(".sql", "")
+                backups.append({
+                    "name": file,
+                    "size": f"{size} KB",
+                    "date": date_str
+                })
+
+    chart_data = {
+        "labels": [b["date"] for b in backups],
+        "sizes": [float(b["size"].replace(" KB", "")) for b in backups],
+    }
+
+    # 🟢 2️⃣ Enviar usuario al template
+    return templates.TemplateResponse(
+        "index.html",
+        {
+            "request": request,
+            "backups": backups,
+            "chart_data": chart_data,
+            "user": user,  # 👈 IMPORTANTE
+        },
+    )
+
+@app.get("/backup")
+async def manual_backup():
+    """Ejecuta el backup manualmente (modo único)."""
+    try:
+        result = subprocess.run(
+            ["python", "/backups/backup.py", "--once"],
+            check=True,
+            capture_output=True,
+            text=True
+        )
+        return JSONResponse(
+            {"status": "success", "message": result.stdout.strip()}
+        )
+
+    except subprocess.CalledProcessError as e:
+        return JSONResponse(
+            {"status": "error", "message": e.stderr.strip() or str(e)}
+        )
+    except Exception as e:
+        return JSONResponse(
+            {"status": "error", "message": f"Error inesperado: {e}"}
+        )
+
+# === Eliminar respaldo ===
+@app.delete("/delete_backup/{filename}")
+async def delete_backup(filename: str):
+    filepath = os.path.join(BACKUP_DIR, filename)
+    if os.path.exists(filepath):
+        try:
+            os.remove(filepath)
+            return JSONResponse({
+                "status": "success",
+                "message": f"Respaldo '{filename}' eliminado."
+            })
+        except Exception as e:
+            return JSONResponse({
+                "status": "error",
+                "message": f"Error al eliminar: {e}"
+            })
+    else:
+        return JSONResponse({
+            "status": "error",
+            "message": "Archivo no encontrado."
+        })
+
+@app.get("/download_backup/{filename}")
+async def download_backup(filename: str):
+    path = os.path.join(BACKUP_DIR, filename)
+    if not os.path.exists(path):
+        return JSONResponse(content={"status": "error", "message": "Archivo no encontrado"})
+    return FileResponse(path, filename=filename)
+app.add_middleware(
+    SessionMiddleware,
+    secret_key="netvis-telares-los-morros"
+)
+def create_netbox_device(nombre, rol):
+    # Resolver IDs reales desde NetBox
+    site_id = get_site_id("Principal")
+    role_id = get_role_id(rol)
+
+    model_name = DEVICE_TYPE_MAP.get(rol)
+    if not model_name:
+        raise Exception(f"Rol no soportado: {rol}")
+
+    device_type_id = get_device_type_id(model_name)
+
+    payload = {
+        "name": nombre,
+        "site": site_id,
+        "role": role_id,
+        "device_type": device_type_id,
+        "status": "active",
+    }
+
+    res = requests.post(
+        f"{NETBOX_URL}dcim/devices/",
+        headers=HEADERS,
+        json=payload,
+        timeout=10
+    )
+
+    if not res.ok:
+        raise Exception(f"NetBox error: {res.text}")
+
+    return res.json()["id"]
+
+def get_snmp_traffic(ip, community="public", if_index=1):
+    def snmp_get(oid):
+        iterator = getCmd(
+            SnmpEngine(),
+            CommunityData(community, mpModel=1),
+            UdpTransportTarget((ip, 161), timeout=2, retries=1),
+            ContextData(),
+            ObjectType(ObjectIdentity(oid))
+        )
+        errorIndication, errorStatus, _, varBinds = next(iterator)
+        if errorIndication or errorStatus:
+            raise Exception("SNMP error")
+        return int(varBinds[0][1])
+
+    in_oid = f"1.3.6.1.2.1.2.2.1.10.{if_index}"
+    out_oid = f"1.3.6.1.2.1.2.2.1.16.{if_index}"
+
+    in1 = snmp_get(in_oid)
+    out1 = snmp_get(out_oid)
+
+    time.sleep(1)
+
+    in2 = snmp_get(in_oid)
+    out2 = snmp_get(out_oid)
+
+    in_mbps = (in2 - in1) / 1024 / 1024
+    out_mbps = (out2 - out1) / 1024 / 1024
+
+    return round(in_mbps + out_mbps, 2)
+
+@app.get("/logout")
+async def logout(request: Request):
+    request.session.clear()
+    return RedirectResponse("/login", status_code=302)
+
+@app.post("/login")
+async def login_user(
+    request: Request,
+    username: str = Form(...),
+    password: str = Form(...)
+):
+    try:
+        conn = get_connection()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+
+        # 🔎 Buscar usuario
+        cur.execute(
+            "SELECT username, password_hash FROM users WHERE username = %s",
+            (username,)
+        )
+        user = cur.fetchone()
+
+        cur.close()
+        conn.close()
+
+        # ❌ Usuario o contraseña incorrectos
+        if not user or password != user["password_hash"]:
+            return {
+                "status": "error",
+                "message": "Credenciales inválidas"
+            }
+
+        # ✅ Login OK → guardar sesión
+        request.session["user"] = {
+            "username": user["username"]
+        }
+
+        return {"status": "success"}
+
+    except Exception as e:
+        print("LOGIN ERROR:", e)
+        return {
+            "status": "error",
+            "message": "Error interno del servidor"
+        }
+@app.get("/login", response_class=HTMLResponse)
+async def login_page(request: Request):
+    # 🔐 Si ya hay sesión iniciada, redirige al dashboard
+    if request.session.get("user"):
+        return RedirectResponse(url="/", status_code=302)
+
+    # 🧩 Renderiza login.html correctamente
+    return templates.TemplateResponse(
+        "login.html",
+        {
+            "request": request,
+            "user": None  # 👈 útil para el header
+        }
+    )
+@app.get("/session")
+def get_session(request: Request):
+    user = request.session.get("user")
+
+    if not user:
+        return {"authenticated": False}
+
+    return {
+        "authenticated": True,
+        "username": user["username"]
+    }
+@app.post("/add_node")
+async def add_node(request: Request):
+    try:
+        data = await request.json()
+
+        nombre = data["nombre"]
+        ip = data["ip"]
+        ubicacion = data["ubicacion"]
+        rol = data["rol"]
+
+        # 🔹 1. Crear en NetBox
+        netbox_id = create_netbox_device(nombre, rol)
+
+        # 🔹 2. Guardar en PostgreSQL
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            INSERT INTO nodos (nombre, ip, ubicacion, rol, netbox_id)
+            VALUES (%s, %s, %s, %s, %s)
+            RETURNING id
+        """, (nombre, ip, ubicacion, rol, netbox_id))
+
+        node_id = cur.fetchone()[0]
+        crear_enlaces_por_ubicacion(conn, netbox_id, ubicacion)
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        return {
+            "status": "success",
+            "id": node_id,
+            "netbox_id": netbox_id
+        }
+
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": str(e)
+        }
+# === Eliminar nodo ===
+
+@app.get("/network/traffic")
+async def network_traffic():
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("SELECT COUNT(*) FROM enlaces")
+    enlaces = cur.fetchone()[0]
+
+    cur.execute("SELECT COUNT(*) FROM nodos")
+    nodos = cur.fetchone()[0]
+
+    cur.close()
+    conn.close()
+
+    # Simulación realista
+    traffic_mbps = round((enlaces * 35 + nodos * 12) * 0.8, 2)
+
+    return {
+        "traffic_mbps": traffic_mbps
+    }
+    
+@app.post("/auto_create_links")
+async def auto_create_links():
+    conn = get_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+
+    # Obtener nodos con ubicación
+    cur.execute("""
+        SELECT id, ubicacion
+        FROM nodos
+        WHERE ubicacion IS NOT NULL
+    """)
+    nodes = cur.fetchall()
+
+    created = 0
+    seen = set()
+
+    for i in range(len(nodes)):
+        for j in range(i + 1, len(nodes)):
+            n1 = nodes[i]
+            n2 = nodes[j]
+
+            # 🔑 MISMA UBICACIÓN
+            if n1["ubicacion"] == n2["ubicacion"]:
+                key = tuple(sorted([n1["id"], n2["id"]]))
+                if key in seen:
+                    continue
+
+                # Verificar si ya existe el enlace
+                cur.execute("""
+                    SELECT 1 FROM enlaces
+                    WHERE (origen=%s AND destino=%s)
+                       OR (origen=%s AND destino=%s)
+                """, (n1["id"], n2["id"], n2["id"], n1["id"]))
+
+                if cur.fetchone():
+                    continue
+
+                # Crear enlace
+                cur.execute("""
+                    INSERT INTO enlaces (origen, destino, tipo, ancho_banda)
+                    VALUES (%s, %s, %s, %s)
+                """, (
+                    n1["id"],
+                    n2["id"],
+                    "LAN",
+                    "1 Gbps"
+                ))
+
+                created += 1
+                seen.add(key)
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return {
+        "status": "success",
+        "created_links": created
+    }    
+@app.delete("/delete_node/{node_id}")
+async def delete_node(node_id: int):
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("SELECT netbox_id FROM nodos WHERE id=%s", (node_id,))
+    row = cur.fetchone()
+
+    if row and row[0]:
+        netbox_id = row[0]
+
+        # 🔥 Eliminar en NetBox
+        nb_res = requests.delete(
+            f"{NETBOX_URL}dcim/devices/{netbox_id}/",
+            headers=HEADERS,
+            timeout=10
+        )
+
+        if not nb_res.ok:
+            return {"status": "error", "message": f"NetBox error: {nb_res.text}"}
+
+    # 🔹 Eliminar enlaces y nodo local
+    cur.execute("DELETE FROM enlaces WHERE origen=%s OR destino=%s", (node_id, node_id))
+    cur.execute("DELETE FROM nodos WHERE id=%s", (node_id,))
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return {"status": "success"}
+
+
+# === Obtener todos los nodos ===
+@app.get("/get_nodes")
+async def get_nodes():
+    """Devuelve todos los nodos registrados en la base de datos (sin posiciones)."""
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT id, nombre, ip, ubicacion, rol FROM nodos;")
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+
+        nodes = [
+            {"id": r[0], "nombre": r[1], "ip": r[2], "ubicacion": r[3], "rol": r[4]}
+            for r in rows
+        ]
+        return {"status": "success", "nodes": nodes}
+    except Exception as e:
+        return {"status": "error", "message": f"Error al obtener nodos: {str(e)}"}
+def crear_enlaces_por_ubicacion(conn, nodo_id, ubicacion):
+    cur = conn.cursor()
+
+    # Buscar otros nodos en la misma ubicación
+    cur.execute("""
+        SELECT id FROM nodos
+        WHERE ubicacion = %s AND id != %s
+    """, (ubicacion, nodo_id))
+
+    otros_nodos = cur.fetchall()
+
+    for (otro_id,) in otros_nodos:
+        # Evitar enlaces duplicados
+        cur.execute("""
+            SELECT 1 FROM enlaces
+            WHERE (origen=%s AND destino=%s)
+               OR (origen=%s AND destino=%s)
+        """, (nodo_id, otro_id, otro_id, nodo_id))
+
+        if cur.fetchone():
+            continue
+
+        # Crear enlace automático
+        cur.execute("""
+            INSERT INTO enlaces (origen, destino, tipo, ancho_banda)
+            VALUES (%s, %s, %s, %s)
+        """, (nodo_id, otro_id, "Automático", "1 Gbps"))
+
+    conn.commit()
+# === Agregar enlace ===
+@app.post("/add_link")
+async def add_link(
+    origen: int = Form(...),
+    destino: int = Form(...),
+    tipo: str = Form(...),
+    ancho_banda: str = Form(None)
+):
+    """Agrega un nuevo enlace entre nodos existentes."""
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        query = """
+        INSERT INTO enlaces (origen, destino, tipo, ancho_banda)
+        VALUES (%s, %s, %s, %s)
+        """
+        cur.execute(query, (origen, destino, tipo, ancho_banda))
+        conn.commit()
+        cur.close()
+        conn.close()
+        return {"status": "success", "message": "Enlace agregado correctamente."}
+    except Exception as e:
+        return {"status": "error", "message": f"Error al agregar enlace: {str(e)}"}
+@app.get("/netbox_api/get_netvis_data")
+async def get_netvis_data():
+    conn = get_connection()
+    cur = conn.cursor()
+
+    # Nodos
+    cur.execute("""
+        SELECT id, nombre, rol
+        FROM nodos
+    """)
+    nodes_db = cur.fetchall()
+
+    nodes = [{
+        "id": n[0],
+        "label": n[1],
+        "nombre": n[1],
+        "rol": n[2]
+    } for n in nodes_db]
+
+    # 🔗 Enlaces
+    cur.execute("""
+        SELECT id, origen, destino, tipo, ancho_banda
+        FROM enlaces
+    """)
+    edges_db = cur.fetchall()
+
+    edges = [{
+        "id": e[0],
+        "from": e[1],
+        "to": e[2],
+        "label": e[3] or "",
+        "title": f"{e[3]} {e[4] or ''}".strip()
+    } for e in edges_db]
+
+    cur.close()
+    conn.close()
+
+    return {
+        "status": "success",
+        "nodes": nodes,
+        "edges": edges
+    }
+# === Obtener red completa (nodos + posiciones) ===
+@app.get("/get_network")
+async def get_network():
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+
+        # 🔹 NODOS
+        cur.execute("""
+            SELECT id, nombre, ip, ubicacion, rol, pos_x, pos_y
+            FROM nodos
+        """)
+        nodos = cur.fetchall()
+
+        # 🔹 ENLACES
+        cur.execute("""
+            SELECT id, origen, destino, tipo, ancho_banda
+            FROM enlaces
+        """)
+        enlaces = cur.fetchall()
+
+        cur.close()
+        conn.close()
+
+        nodes = []
+        for n in nodos:
+            node = {
+                "id": n[0],
+                "label": n[1],
+                "title": f"{n[1]}<br>IP: {n[2]}<br>Ubicación: {n[3]}",
+                "rol": n[4],
+                "shape": "icon",
+                "icon": {
+                    "face": "FontAwesome",
+                    "code": (
+                        "\uf233" if n[4] == "router" else
+                        "\uf6ff" if n[4] == "switch" else
+                        "\uf0c2" if n[4] == "firewall" else
+                        "\uf1eb" if n[4] == "ap" else
+                        "\uf233"
+                    ),
+                    "size": 40
+                }
+            }
+
+            # 📍 SOLO fijar si tiene coordenadas reales
+            if n[5] not in (None, 0) and n[6] not in (None, 0):
+                node.update({
+                    "x": float(n[5]),
+                    "y": float(n[6]),
+                    "fixed": True
+                })
+
+            nodes.append(node)
+
+        edges = []
+        for e in enlaces:
+            edges.append({
+                "id": e[0],
+                "from": e[1],
+                "to": e[2],
+                "label": e[4] or e[3],
+                "arrows": "to",
+                "smooth": True,
+                "width": 2
+            })
+
+        return {
+            "status": "success",
+            "nodes": nodes,
+            "edges": edges
+        }
+
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": f"Error al obtener red: {str(e)}",
+            "nodes": [],
+            "edges": []
+        }
+
+# === Actualizar posición del nodo ===
+@app.post("/update_position/{node_id}")
+async def update_position(node_id: int, request: Request):
+    """Actualiza la posición X,Y de un nodo cuando se mueve en el mapa."""
+    try:
+        body = await request.json()
+        pos_x = body.get("pos_x")
+        pos_y = body.get("pos_y")
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute("UPDATE nodos SET pos_x = %s, pos_y = %s WHERE id = %s", (pos_x, pos_y, node_id))
+        conn.commit()
+        cur.close()
+        conn.close()
+        return {"status": "success", "message": "Posición actualizada"}
+    except Exception as e:
+        return {"status": "error", "message": f"Error al actualizar posición: {str(e)}"}
+
+# === Estadísticas de nodos ===
+@app.get("/get_device_stats")
+async def get_device_stats():
+    """Devuelve la cantidad de nodos agrupados por tipo (rol)."""
+    try:
+        conn = get_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT rol, COUNT(*) FROM nodos GROUP BY rol;")
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+        data = [{"rol": r[0], "cantidad": r[1]} for r in rows]
+        return {"status": "success", "data": data}
+    except Exception as e:
+        return {"status": "error", "message": f"Error al obtener estadísticas: {str(e)}"}
+
+# === Actualizar nodos desde la tabla ===
+@app.put("/update_node/{node_id}")
+async def update_node(node_id: int, request: Request):
+    data = await request.json()
+    nombre = data.get("nombre")
+    rol = data.get("rol")
+
+    conn = get_connection()
+    cur = conn.cursor()
+
+    # 🔹 Obtener netbox_id
+    cur.execute("SELECT netbox_id FROM nodos WHERE id=%s", (node_id,))
+    row = cur.fetchone()
+    if not row or not row[0]:
+        return {"status": "error", "message": "Nodo no sincronizado con NetBox"}
+
+    netbox_id = row[0]
+
+    # 🔹 Resolver role_id REAL desde NetBox
+    try:
+        role_id = get_role_id(rol)
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+    # 🔹 Actualizar en NetBox
+    payload = {
+        "name": nombre,
+        "role": role_id,
+    }
+
+    nb_res = requests.patch(
+        f"{NETBOX_URL}dcim/devices/{netbox_id}/",
+        headers=HEADERS,
+        json=payload,
+        timeout=10
+    )
+
+    if not nb_res.ok:
+        return {
+            "status": "error",
+            "message": f"NetBox error: {nb_res.text}"
+        }
+
+    # 🔹 Actualizar en DB local
+    cur.execute(
+        "UPDATE nodos SET nombre=%s, rol=%s WHERE id=%s",
+        (nombre, rol, node_id)
+    )
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return {"status": "success"}
+@app.get("/list_backups")
+async def list_backups():
+    if not os.path.exists(BACKUP_DIR):
+        os.makedirs(BACKUP_DIR)
+
+    files = []
+    for f in os.listdir(BACKUP_DIR):
+        if f.endswith(".sql"):
+            path = os.path.join(BACKUP_DIR, f)
+            size = round(os.path.getsize(path) / 1024, 2)  # KB
+            date = os.path.getmtime(path)
+            files.append({
+                "name": f,
+                "size": f"{size} KB",
+                "date": __import__("datetime").datetime.fromtimestamp(date).strftime("%Y-%m-%d %H:%M:%S")
+            })
+
+    return JSONResponse(content={"status": "success", "files": files})
+
+@app.get("/netbox_api/get_netvis_data")
+async def get_netvis_data():
+    """
+    Devuelve nodos y enlaces desde NetBox en formato compatible con NetVis.
+    """
+    try:
+        # 🔹 Obtener dispositivos (devices)
+        devices_res = requests.get(
+            f"{NETBOX_URL}dcim/devices/?limit=1000",
+            headers=HEADERS
+        )
+        devices_res.raise_for_status()
+        devices = devices_res.json().get("results", [])
+
+        nodes = []
+        for d in devices:
+            # Obtener modelo o asignar 'desconocido'
+            rol = (d.get("device_type", {}).get("model") or "desconocido").lower()
+            device_name = d.get("name") or f"Dispositivo {d.get('id')}"
+            
+            nodes.append({
+                "id": d.get("id"),
+                "label": device_name,
+                "rol": rol,  # ⚡ Importante: frontend espera 'rol', no 'role'
+                "title": f"{device_name} ({rol})",
+                "x": 0,  # posición inicial
+                "y": 0,
+                "fixed": False  # vis.js ajustará automáticamente si no se mueve
+            })
+
+        # 🔹 Obtener cables (links)
+        cables_res = requests.get(
+            f"{NETBOX_URL}dcim/cables/?limit=1000",
+            headers=HEADERS
+        )
+        cables_res.raise_for_status()
+        cables = cables_res.json().get("results", [])
+
+        edges = []
+        for c in cables:
+            device_a = c.get("termination_a_device")
+            device_b = c.get("termination_b_device")
+            if device_a and device_b and device_a.get("id") and device_b.get("id"):
+                edges.append({
+                    "from": device_a["id"],
+                    "to": device_b["id"],
+                    "arrows": "to",
+                    "smooth": True,
+                    "label": c.get("label") or str(c.get("id"))  # opcional: mostrar id o label
+                })
+
+        return JSONResponse({"status": "success", "nodes": nodes, "edges": edges})
+
+    except Exception as e:
+        return JSONResponse({
+            "status": "error",
+            "message": str(e),
+            "nodes": [],
+            "edges": []
+        })
+@app.get("/netbox_test")
+def netbox_test():
+    r = requests.get(
+        f"{NETBOX_URL}dcim/devices/",
+        headers=HEADERS,
+        timeout=10
+    )
+    return {
+        "status_code": r.status_code,
+        "ok": r.ok,
+        "data": r.json() if r.ok else r.text
+    }        
