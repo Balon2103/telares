@@ -7,4 +7,3 @@ requests
 itsdangerous
 urllib3
 pysnmp
-traceback
