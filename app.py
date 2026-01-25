@@ -27,7 +27,7 @@ app.add_middleware(
     SessionMiddleware,
     secret_key="super-secret-key",
     same_site="none",
-    https_only=False
+    https_only=True
 )
 BACKUP_DIR = "/backups"
 NETBOX_URL = os.getenv(
@@ -275,25 +275,26 @@ async def login(request: Request):
         print("   user:", username)
         print("   pass:", password)
 
-        # 👇 EJEMPLO: lógica típica
         if username != "admin" or password != "admin2025":
-            return {
-                "status": "error",
-                "message": "Usuario o contraseña incorrectos"
-            }
+            return JSONResponse(
+                {"status": "error", "message": "Credenciales inválidas"},
+                status_code=401
+            )
 
-        # si usas sesión
+        # ✅ guardar sesión
         request.session["user"] = username
+        print("✅ SESIÓN GUARDADA:", dict(request.session))
 
-        return {"status": "success"}
+        # 🔥 RESPUESTA EXPLÍCITA
+        response = JSONResponse({"status": "success"})
+        return response
 
     except Exception as e:
-        print("🔥 ERROR EN /login 🔥")
-        traceback.print_exc()   # 👈 CLAVE
-        return {
-            "status": "error",
-            "message": str(e)     # 👈 muestra el error REAL
-        }
+        traceback.print_exc()
+        return JSONResponse(
+            {"status": "error", "message": str(e)},
+            status_code=500
+        )
 @app.get("/session")
 def get_session(request: Request):
     user = request.session.get("user")

@@ -1,0 +1,140 @@
+[2025-10-31 01:58:05.212702] ❌ Error al generar backup: pg_dump: error: connection to server at "postgres_telares" (172.19.0.2), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+[2025-10-31 02:00:09.498143] ❌ Error al generar backup: pg_dump: error: connection to server at "postgres_telares" (172.19.0.2), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+[2025-10-31 02:04:25.561425] ❌ Error al generar backup: pg_dump: error: connection to server at "postgres_telares" (172.19.0.2), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+[2025-10-31 02:07:50.621818] ❌ Error al generar backup: pg_dump: error: connection to server at "postgres_telares" (172.19.0.2), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+[2025-10-31 02:11:31.943986] ❌ Error al generar backup: pg_dump: error: connection to server at "postgres_telares" (172.19.0.2), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+[2025-10-31 23:00:37.961443] ❌ Error al generar backup: pg_dump: error: connection to server at "postgres_telares" (172.19.0.5), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+[2025-10-31 23:05:10.179403] ✅ Backup exitoso: /backups/backup_20251031_230509.sql
+[2025-10-31 23:07:16.526253] ✅ Backup exitoso: /backups/backup_20251031_230716.sql
+[2025-10-31 23:08:25.042877] ✅ Backup exitoso: /backups/backup_20251031_230824.sql
+[2025-10-31 23:30:55.612355] ✅ Backup exitoso: /backups/backup_20251031_233055.sql
+[2025-10-31 23:31:10.266020] ✅ Backup exitoso: /backups/backup_20251031_233110.sql
+[2025-11-01 00:31:00.355614] ✅ Backup exitoso: /backups/backup_20251101_003055.sql
+[2025-11-01 00:31:10.110644] ✅ Backup exitoso: /backups/backup_20251101_003109.sql
+[2025-11-01 01:31:04.989751] ✅ Backup exitoso: /backups/backup_20251101_013059.sql
+[2025-11-01 01:31:10.184226] ✅ Backup exitoso: /backups/backup_20251101_013109.sql
+[2025-11-01 01:43:39.598087] ❌ Error al generar backup: pg_dump: error: connection to server at "postgres_telares" (172.19.0.3), port 5432 failed: FATAL:  the database system is starting up
+[2025-11-01 01:43:57.198690] ✅ Backup exitoso: /backups/backup_20251101_014356.sql
+[2025-11-01 01:59:15.819515] ❌ Error al generar backup:
+Comando: pg_dump --dbname=postgresql://postgres:Password123!@postgres_telares/telares_db -f /backups/backup_20251101_015915.sql
+Error: pg_dump: error: connection to server at "postgres_telares" (172.19.0.3), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+[2025-11-01 01:59:38.125752] ✅ Backup exitoso: /backups/backup_20251101_015937.sql
+[2025-11-01 02:03:57.366293] ✅ Backup exitoso: /backups/backup_20251101_020357.sql
+[2025-11-01 02:04:25.525194] ✅ Backup exitoso: /backups/backup_20251101_020425.sql
+[2025-11-01 02:07:28.985451] ❌ Error al generar backup:
+Comando: pg_dump --dbname=postgresql://postgres:Password123!@postgres_telares/telares_db -f /backups/backup_20251101_020728.sql
+Error: pg_dump: error: connection to server at "postgres_telares" (172.19.0.3), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+[2025-11-01 02:07:35.943580] ✅ Backup exitoso: /backups/backup_20251101_020735.sql
+[2025-11-01 02:07:42.160046] ✅ Backup exitoso: /backups/backup_20251101_020742.sql
+[2025-11-01 02:11:40.948430] Respaldo exitoso: /backups/backup_20251101_021140.sql
+[2025-11-01 02:12:05.744598] Respaldo exitoso: /backups/backup_20251101_021205.sql
+[2025-11-01 13:48:54.025712] Respaldo exitoso: /backups/backup_20251101_134853.sql
+[2025-11-01 14:14:58.636450] Respaldo exitoso: /backups/backup_20251101_141458.sql
+[2025-11-01 14:26:17.873486] Error al generar respaldo:
+Comando: pg_dump --dbname=postgresql://postgres:Password123!@postgres_telares/telares_db -f /backups/backup_20251101_142617.sql
+Error: pg_dump: error: connection to server at "postgres_telares" (172.18.0.2), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+[2025-11-01 16:23:24.945470] Respaldo exitoso: /backups/backup_20251101_162324.sql
+[2025-11-01 16:25:53.610366] Respaldo exitoso: /backups/backup_20251101_162553.sql
+[2025-11-01 16:30:53.314929] Respaldo exitoso: /backups/backup_20251101_163053.sql
+[2025-11-01 16:37:20.603589] Respaldo exitoso: /backups/backup_20251101_163720.sql
+[2025-11-01 16:38:01.306050] Error al generar respaldo:
+Comando: pg_dump --dbname=postgresql://postgres:Password123!@postgres_telares/telares_db -f /backups/backup_20251101_163801.sql
+Error: pg_dump: error: connection to server at "postgres_telares" (172.18.0.2), port 5432 failed: FATAL:  the database system is not yet accepting connections
+DETAIL:  Consistent recovery state has not been yet reached.
+[2025-11-01 16:38:41.149792] Respaldo exitoso: /backups/backup_20251101_163841.sql
+[2025-11-01 16:44:20.243953] Respaldo exitoso: /backups/backup_20251101_164420.sql
+[2025-11-01 16:49:14.127515] Respaldo exitoso: /backups/backup_20251101_164914.sql
+[2025-11-01 16:55:06.504970] Respaldo exitoso: /backups/backup_20251101_165506.sql
+[2025-11-01 16:55:53.720073] Respaldo exitoso: /backups/backup_20251101_165553.sql
+[2025-11-01 17:04:45.919486] Respaldo exitoso: /backups/backup_20251101_170445.sql
+[2025-11-01 17:10:45.703518] Respaldo exitoso: /backups/backup_20251101_171045.sql
+[2025-11-01 17:16:48.199437] Respaldo exitoso: /backups/backup_20251101_171647.sql
+[2025-11-01 17:30:23.314404] Error al generar respaldo:
+Comando: pg_dump --dbname=postgresql://postgres:Password123!@postgres_telares/telares_db -f /backups/backup_20251101_173023.sql
+Error: pg_dump: error: connection to server at "postgres_telares" (172.18.0.2), port 5432 failed: FATAL:  the database system is not yet accepting connections
+DETAIL:  Consistent recovery state has not been yet reached.
+[2025-11-01 21:52:28.890076] Respaldo exitoso: /backups/backup_20251101_215228.sql
+[2025-11-01 21:52:47.570323] Respaldo exitoso: /backups/backup_20251101_215247.sql
+[2025-11-01 22:11:17.983987] Respaldo exitoso: /backups/backup_20251101_221117.sql
+[2025-11-01 22:16:58.613098] Respaldo exitoso: /backups/backup_20251101_221658.sql
+[2025-11-01 22:24:03.482647] Respaldo exitoso: /backups/backup_20251101_222403.sql
+[2025-11-01 22:36:47.152714] Respaldo exitoso: /backups/backup_20251101_223647.sql
+[2025-11-01 22:51:09.213053] Respaldo exitoso: /backups/backup_20251101_225108.sql
+[2025-11-01 23:51:09.083368] Respaldo exitoso: /backups/backup_20251101_235108.sql
+[2025-11-02 00:41:25.872027] Respaldo exitoso: /backups/backup_20251102_004125.sql
+[2025-11-02 00:46:45.303203] Respaldo exitoso: /backups/backup_20251102_004645.sql
+[2025-11-02 00:54:30.599605] Respaldo exitoso: /backups/backup_20251102_005430.sql
+[2025-11-02 01:02:28.995385] Respaldo exitoso: /backups/backup_20251102_010228.sql
+[2025-11-02 01:02:55.315982] Respaldo exitoso: /backups/backup_20251102_010255.sql
+[2025-11-02 01:17:45.145000] Respaldo exitoso[2025-11-02 01:38:38.183997] Respaldo exitoso[2025-11-02 01:53:16.798485] Respaldo exitoso[2025-11-02 02:11:13.673270] Respaldo exitoso[2025-11-02 02:27:33.603869] Respaldo exitoso[2025-11-02 02:50:26.051162] Respaldo exitoso[2025-11-02 03:50:26.008415] Respaldo exitoso[2025-11-02 04:50:25.916146] Respaldo exitoso[2025-11-02 05:50:25.816404] Respaldo exitoso[2025-11-02 13:56:26.260273] Error al generar respaldo:
+Comando: pg_dump --dbname=postgresql://postgres:Password123!@postgres_telares/telares_db -f /backups/respaldo_20251102_135626.sql
+Error: pg_dump: error: connection to server at "postgres_telares" (172.18.0.2), port 5432 failed: FATAL:  the database system is starting up
+[2025-11-02 13:56:35.703015] Respaldo exitoso[2025-11-02 14:04:18.681645] Respaldo exitoso[2025-11-02 15:04:20.548111] Respaldo exitoso[2025-11-02 15:18:09.212839] Respaldo exitoso[2025-11-02 15:27:55.071663] Respaldo exitoso[2025-11-02 15:32:57.128189] Respaldo exitoso[2025-11-02 16:27:55.092461] Respaldo exitoso[2025-11-02 16:42:19.513557] Respaldo exitoso[2025-11-02 16:47:02.331501] Respaldo exitoso[2025-11-02 16:54:36.913140] Respaldo exitoso[2025-11-02 16:58:37.862285] Respaldo exitoso[2025-11-02 17:12:59.859116] Respaldo exitoso[2025-11-02 18:13:04.519299] Respaldo exitoso[2025-11-02 19:13:09.141921] Respaldo exitoso[2025-11-02 20:13:12.949704] Respaldo exitoso[2025-11-02 21:13:13.084402] Respaldo exitoso[2025-11-02 22:13:13.218086] Respaldo exitoso[2025-11-02 22:26:24.705098] Respaldo exitoso[2025-11-02 22:33:32.559365] Respaldo exitoso[2025-11-02 22:44:28.550787] Respaldo exitoso[2025-11-02 22:52:05.997138] Respaldo exitoso[2025-11-02 23:52:10.931616] Respaldo exitoso[2025-11-03 00:15:11.061015] Respaldo exitoso[2025-11-03 01:15:15.857719] Respaldo exitoso[2025-11-03 02:15:15.960200] Respaldo exitoso[2025-11-03 03:15:20.467803] Respaldo exitoso[2025-11-03 04:15:25.064442] Respaldo exitoso[2025-11-03 05:15:25.137988] Respaldo exitoso[2025-11-03 10:52:15.418722] Respaldo exitoso[2025-11-03 11:52:20.101892] Respaldo exitoso[2025-11-03 12:52:24.774136] Respaldo exitoso[2025-11-03 13:52:29.457607] Respaldo exitoso[2025-11-03 22:16:38.736198] Error al generar respaldo:
+Comando: pg_dump --dbname=postgresql://postgres:Password123!@postgres_telares/telares_db -f /backups/respaldo_20251103_221638.sql
+Error: pg_dump: error: connection to server at "postgres_telares" (172.18.0.3), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+[2025-11-03 22:35:53.642377] Respaldo exitoso[2025-11-03 22:46:35.862566] Respaldo exitoso[2025-11-03 22:47:04.294098] Respaldo exitoso[2025-11-03 23:06:37.909046] Respaldo exitoso[2025-11-03 23:28:00.990072] Respaldo exitoso[2025-11-03 23:53:57.941416] Respaldo exitoso[2025-11-04 00:53:57.857379] Respaldo exitoso[2025-11-04 01:46:01.449618] Respaldo exitoso[2025-11-04 02:22:29.214705] Respaldo exitoso[2025-11-04 03:22:29.145734] Respaldo exitoso[2025-11-04 04:22:28.891106] Respaldo exitoso[2025-11-04 05:22:28.779332] Respaldo exitoso[2025-11-04 06:22:28.682864] Respaldo exitoso[2025-11-04 21:41:55.930694] Respaldo exitoso[2025-11-04 23:09:55.938485] Error al generar respaldo:
+Comando: pg_dump --dbname=postgresql://postgres:Password123!@postgres_telares/telares_db -f /backups/respaldo_20251104_230955.sql
+Error: pg_dump: error: connection to server at "postgres_telares" (172.18.0.3), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+[2025-11-04 23:48:50.515332] Respaldo exitoso[2025-11-05 00:09:55.214097] Respaldo exitoso[2025-11-05 00:45:07.058285] Respaldo exitoso[2025-11-05 01:19:36.484171] Respaldo exitoso[2025-11-05 02:31:35.034895] Respaldo exitoso[2025-11-05 03:31:35.015386] Respaldo exitoso[2025-11-05 04:31:34.828592] Respaldo exitoso[2025-11-05 05:31:34.721062] Respaldo exitoso[2025-11-05 06:31:34.616301] Respaldo exitoso[2025-11-05 07:31:34.560085] Respaldo exitoso[2025-11-05 15:11:14.139923] Respaldo exitoso[2025-11-05 15:29:02.580568] Respaldo exitoso[2025-11-05 15:33:23.672674] Respaldo exitoso[2025-11-05 16:02:11.050977] Respaldo exitoso[2025-11-05 16:13:35.604130] Respaldo exitoso[2025-11-05 16:45:29.058278] Respaldo exitoso[2025-11-05 17:13:32.946594] Respaldo exitoso[2025-11-05 17:45:42.719645] Respaldo exitoso[2025-11-05 18:03:06.557977] Respaldo exitoso[2025-11-05 18:04:01.836660] Respaldo exitoso[2025-11-05 19:03:06.545834] Respaldo exitoso[2025-11-05 19:29:59.862355] Respaldo exitoso[2025-11-05 19:31:31.231850] Respaldo exitoso[2025-11-05 20:38:00.887663] Error al generar respaldo:
+Comando: pg_dump --dbname=postgresql://postgres:Password123!@postgres_telares/telares_db -f /backups/respaldo_20251105_203800.sql
+Error: pg_dump: error: connection to server at "postgres_telares" (172.18.0.2), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+[2025-11-05 20:55:54.865877] Respaldo exitoso[2025-11-05 20:56:20.120621] Respaldo exitoso[2025-11-05 21:01:54.878308] Respaldo exitoso[2025-11-05 21:29:49.518431] Respaldo exitoso[2025-11-05 22:07:51.234140] Respaldo exitoso[2025-11-05 22:08:01.761590] Respaldo exitoso[2025-11-05 22:26:21.339119] Respaldo exitoso[2025-11-05 22:29:43.926827] Respaldo exitoso[2025-11-06 00:20:08.880925] Error al generar respaldo:
+Comando: pg_dump --dbname=postgresql://postgres:Password123!@postgres_telares/telares_db -f /backups/respaldo_20251106_002008.sql
+Error: pg_dump: error: connection to server at "postgres_telares" (172.18.0.2), port 5432 failed: FATAL:  the database system is starting up
+[2025-11-06 00:38:52.313679] Respaldo exitoso[2025-11-06 00:57:21.893704] Respaldo exitoso[2025-11-06 00:59:57.642426] Respaldo exitoso[2025-11-06 01:21:51.322435] Respaldo exitoso[2025-11-06 01:40:25.838465] Respaldo exitoso[2025-11-06 01:47:19.161934] Respaldo exitoso[2025-11-08 20:27:20.562724] Error al generar respaldo:
+Comando: pg_dump --dbname=postgresql://postgres:Password123!@postgres_telares/telares_db -f /backups/respaldo_20251108_202720.sql
+Error: pg_dump: error: connection to server at "postgres_telares" (172.18.0.2), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+[2025-11-08 20:36:35.607498] Respaldo exitoso[2025-12-13 20:45:05.381454] Respaldo exitoso[2025-12-14 17:03:35.237167] Error al generar respaldo:
+Comando: pg_dump --dbname=postgresql://postgres:Password123!@postgres_telares/telares_db -f /backups/respaldo_20251214_170335.sql
+Error: pg_dump: error: connection to server at "postgres_telares" (172.18.0.3), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+[2025-12-14 17:33:32.318005] Respaldo exitoso[2025-12-14 17:50:04.501227] Respaldo exitoso[2025-12-14 18:28:33.772604] Respaldo exitoso[2025-12-14 19:00:32.987891] Respaldo exitoso[2025-12-14 20:00:33.052541] Respaldo exitoso[2025-12-14 21:00:32.966326] Respaldo exitoso[2025-12-14 21:12:52.724390] Respaldo exitoso[2025-12-14 21:31:27.307347] Respaldo exitoso[2025-12-14 21:44:40.892046] Respaldo exitoso[2025-12-14 22:11:31.547996] Respaldo exitoso[2025-12-14 22:27:23.397262] Respaldo exitoso[2025-12-14 22:42:25.535031] Respaldo exitoso[2025-12-14 22:47:53.012235] Respaldo exitoso[2025-12-14 23:42:25.523037] Respaldo exitoso[2025-12-15 00:42:25.458111] Respaldo exitoso[2025-12-15 01:42:25.384210] Respaldo exitoso[2025-12-15 01:56:20.882745] Respaldo exitoso[2025-12-15 02:10:40.026164] Respaldo exitoso[2025-12-15 02:38:44.337218] Respaldo exitoso[2025-12-15 02:46:55.502849] Respaldo exitoso[2025-12-15 03:01:00.694167] Respaldo exitoso[2025-12-15 03:15:07.988698] Respaldo exitoso[2025-12-15 03:53:45.583753] Respaldo exitoso[2025-12-15 03:54:15.159288] Respaldo exitoso[2025-12-15 04:53:45.614792] Respaldo exitoso[2025-12-15 05:53:45.699070] Respaldo exitoso[2025-12-15 06:53:45.671584] Respaldo exitoso[2025-12-15 07:53:45.619871] Respaldo exitoso[2025-12-15 23:38:46.239075] Error al generar respaldo:
+Comando: pg_dump --dbname=postgresql://postgres:Password123!@postgres_telares/telares_db -f /backups/respaldo_20251215_233845.sql
+Error: pg_dump: error: connection to server at "postgres_telares" (172.18.0.4), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+[2025-12-16 00:10:40.485358] Respaldo exitoso[2025-12-16 00:11:39.576999] Respaldo exitoso[2025-12-16 00:12:02.352833] Respaldo exitoso[2025-12-16 00:13:46.341423] Respaldo exitoso[2025-12-16 00:33:30.657016] Respaldo exitoso[2025-12-16 00:33:45.463612] Respaldo exitoso[2025-12-16 00:48:35.220356] Respaldo exitoso[2025-12-16 00:48:50.965716] Respaldo exitoso[2025-12-16 00:49:33.578548] Respaldo exitoso[2025-12-16 01:03:01.513392] Respaldo exitoso[2025-12-16 01:13:01.982533] Respaldo exitoso[2025-12-16 01:39:19.202365] Respaldo exitoso[2025-12-16 01:43:15.712924] Respaldo exitoso[2025-12-16 01:55:42.690458] Respaldo exitoso[2025-12-16 02:28:37.016420] Respaldo exitoso[2025-12-16 02:44:43.259330] Respaldo exitoso[2025-12-16 02:44:58.572886] Respaldo exitoso[2025-12-16 02:45:16.000189] Respaldo exitoso[2025-12-16 02:54:36.717751] Respaldo exitoso[2025-12-16 02:56:42.689994] Respaldo exitoso[2025-12-16 03:54:36.772335] Respaldo exitoso[2025-12-16 04:54:37.046274] Respaldo exitoso[2025-12-16 05:54:37.057306] Respaldo exitoso[2025-12-16 06:54:36.897372] Respaldo exitoso[2025-12-16 23:31:22.782195] Error al generar respaldo:
+Comando: pg_dump --dbname=postgresql://postgres:Password123!@postgres_telares/telares_db -f /backups/respaldo_20251216_233122.sql
+Error: pg_dump: error: connection to server at "postgres_telares" (172.18.0.4), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+[2025-12-16 23:59:40.276558] Respaldo exitoso[2025-12-17 00:00:26.151316] Respaldo exitoso[2025-12-17 00:13:40.658820] Respaldo exitoso[2025-12-17 00:13:49.093279] Respaldo exitoso[2025-12-17 00:49:41.866941] Respaldo exitoso[2025-12-17 00:50:11.910713] Respaldo exitoso[2025-12-17 00:59:09.822597] Respaldo exitoso[2025-12-17 00:59:22.769302] Respaldo exitoso[2025-12-17 01:14:58.190601] Respaldo exitoso[2025-12-17 01:22:38.773824] Respaldo exitoso[2025-12-17 01:30:49.959786] Respaldo exitoso[2025-12-17 01:41:05.858088] Respaldo exitoso[2025-12-17 01:46:19.695121] Respaldo exitoso[2025-12-17 01:52:16.321933] Respaldo exitoso[2025-12-17 01:57:11.610042] Respaldo exitoso[2025-12-17 01:57:37.984130] Respaldo exitoso[2025-12-17 02:08:00.526209] Respaldo exitoso[2025-12-17 02:13:20.329877] Respaldo exitoso[2025-12-17 02:13:35.327130] Respaldo exitoso[2025-12-17 02:20:18.445113] Respaldo exitoso[2025-12-17 02:39:54.427795] Respaldo exitoso[2025-12-17 03:15:23.970236] Respaldo exitoso[2025-12-17 21:08:54.480315] Error al generar respaldo:
+Comando: pg_dump --dbname=postgresql://postgres:Password123!@postgres_telares/telares_db -f /backups/respaldo_20251217_210854.sql
+Error: pg_dump: error: connection to server at "postgres_telares" (172.18.0.4), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+[2025-12-17 21:28:50.761111] Respaldo exitoso[2025-12-17 21:43:09.129963] Respaldo exitoso[2025-12-17 21:55:39.885548] Respaldo exitoso[2025-12-17 22:00:41.919850] Respaldo exitoso[2025-12-17 22:11:18.916254] Respaldo exitoso[2025-12-17 22:23:22.313534] Respaldo exitoso[2025-12-18 00:43:26.833629] Error al generar respaldo:
+Comando: pg_dump --dbname=postgresql://postgres:Password123!@postgres_telares/telares_db -f /backups/respaldo_20251218_004326.sql
+Error: pg_dump: error: connection to server at "postgres_telares" (172.18.0.2), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+[2025-12-18 01:43:27.101689] Respaldo exitoso[2025-12-18 02:43:27.072700] Respaldo exitoso[2025-12-18 03:43:27.043604] Respaldo exitoso[2025-12-18 04:43:27.115656] Respaldo exitoso[2026-01-02 01:47:38.034736] Error al generar respaldo:
+Comando: pg_dump --dbname=postgresql://postgres:Password123!@postgres_telares/telares_db -f /backups/respaldo_20260102_014737.sql
+Error: pg_dump: error: connection to server at "postgres_telares" (172.18.0.4), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+[2026-01-02 01:48:06.958258] Error al generar respaldo:
+Comando: pg_dump --dbname=postgresql://postgres:Password123!@postgres_telares/telares_db -f /backups/respaldo_20260102_014806.sql
+Error: pg_dump: error: connection to server at "postgres_telares" (172.18.0.4), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+[2026-01-02 01:48:44.649504] Respaldo exitoso[2026-01-20 00:37:06.767624] Error al generar respaldo:
+Comando: pg_dump --dbname=postgresql://postgres:Password123!@postgres_telares/telares_db -f /backups/respaldo_20260120_003706.sql
+Error: pg_dump: error: connection to server at "postgres_telares" (172.18.0.4), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+[2026-01-20 00:46:36.881615] Respaldo exitoso[2026-01-20 01:04:10.493722] Respaldo exitoso[2026-01-20 01:24:41.638390] Respaldo exitoso[2026-01-20 01:38:16.217061] Respaldo exitoso[2026-01-20 01:57:42.639094] Respaldo exitoso[2026-01-20 02:06:37.055659] Respaldo exitoso[2026-01-20 02:33:15.948492] Respaldo exitoso[2026-01-21 00:25:24.663937] Error al generar respaldo:
+Comando: pg_dump --dbname=postgresql://postgres:Password123!@postgres_telares/telares_db -f /backups/respaldo_20260121_002524.sql
+Error: pg_dump: error: connection to server at "postgres_telares" (172.18.0.3), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+[2026-01-21 00:51:30.704431] Respaldo exitoso[2026-01-21 01:38:21.531563] Respaldo exitoso[2026-01-21 02:25:00.628846] Respaldo exitoso[2026-01-21 02:34:18.109124] Respaldo exitoso[2026-01-21 03:11:21.962609] Respaldo exitoso[2026-01-21 04:11:21.948718] Respaldo exitoso[2026-01-21 05:11:22.065370] Respaldo exitoso[2026-01-21 06:11:22.149769] Respaldo exitoso[2026-01-21 07:11:22.155012] Respaldo exitoso[2026-01-21 23:49:33.216711] Error al generar respaldo:
+Comando: pg_dump --dbname=postgresql://postgres:Password123!@postgres_telares/telares_db -f /backups/respaldo_20260121_234932.sql
+Error: pg_dump: error: connection to server at "postgres_telares" (172.18.0.4), port 5432 failed: Connection refused
+	Is the server running on that host and accepting TCP/IP connections?
+[2026-01-22 00:13:42.970733] Respaldo exitoso[2026-01-22 00:45:13.055075] Respaldo exitoso[2026-01-22 00:57:05.979240] Respaldo exitoso[2026-01-22 01:13:34.021338] Respaldo exitoso

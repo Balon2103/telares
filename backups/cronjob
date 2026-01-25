@@ -1,0 +1,1 @@
+* * * * * root /usr/local/bin/python /backups/backup.py >> /var/log/backup.log 2>&1
