@@ -11,7 +11,7 @@ import requests
 from starlette.middleware.sessions import SessionMiddleware
 from psycopg2.extras import RealDictCursor
 import urllib3
-from pysnmp.hlapi import *
+import traceback
 import time
 
 
@@ -324,20 +324,36 @@ async def login_user(
             "status": "error",
             "message": "Error interno del servidor"
         }
-@app.get("/login", response_class=HTMLResponse)
-async def login_page(request: Request):
-    # 🔐 Si ya hay sesión iniciada, redirige al dashboard
-    if request.session.get("user"):
-        return RedirectResponse(url="/", status_code=302)
+@app.post("/login")
+async def login(request: Request):
+    try:
+        form = await request.form()
+        username = form.get("username")
+        password = form.get("password")
 
-    # 🧩 Renderiza login.html correctamente
-    return templates.TemplateResponse(
-        "login.html",
-        {
-            "request": request,
-            "user": None  # 👈 útil para el header
+        print("🔐 LOGIN ATTEMPT")
+        print("   user:", username)
+        print("   pass:", password)
+
+        # 👇 EJEMPLO: lógica típica
+        if username != "admin" or password != "admin2025":
+            return {
+                "status": "error",
+                "message": "Usuario o contraseña incorrectos"
+            }
+
+        # si usas sesión
+        request.session["user"] = username
+
+        return {"status": "success"}
+
+    except Exception as e:
+        print("🔥 ERROR EN /login 🔥")
+        traceback.print_exc()   # 👈 CLAVE
+        return {
+            "status": "error",
+            "message": str(e)     # 👈 muestra el error REAL
         }
-    )
 @app.get("/session")
 def get_session(request: Request):
     user = request.session.get("user")
