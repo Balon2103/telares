@@ -15,7 +15,7 @@ LOG_FILE = os.path.join(BACKUP_DIR, "backup_log.txt")
 
 
 def create_backup():
-    """Genera un respaldo completo de la base de datos PostgreSQL."""
+    """Genera un respaldo de la base de datos PostgreSQL."""
     os.makedirs(BACKUP_DIR, exist_ok=True)
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
