@@ -463,35 +463,28 @@ async def get_nodes():
         return {"status": "success", "nodes": nodes}
     except Exception as e:
         return {"status": "error", "message": f"Error al obtener nodos: {str(e)}"}
-def crear_enlaces_por_ubicacion(conn, nodo_id, ubicacion):
+def crear_enlaces_por_ubicacion(conn, netbox_id, ubicacion):
     cur = conn.cursor()
 
-    # Buscar otros nodos en la misma ubicación
+    # Buscar todos los nodos existentes en la misma ubicación
     cur.execute("""
         SELECT id FROM nodos
-        WHERE ubicacion = %s AND id != %s
-    """, (ubicacion, nodo_id))
+        WHERE ubicacion = %s AND netbox_id != %s
+    """, (ubicacion, netbox_id))
+    otros_nodos = [row[0] for row in cur.fetchall()]
 
-    otros_nodos = cur.fetchall()
+    # Nodo actual
+    cur.execute("SELECT id FROM nodos WHERE netbox_id = %s", (netbox_id,))
+    nodo_actual = cur.fetchone()[0]
 
-    for (otro_id,) in otros_nodos:
-        # Evitar enlaces duplicados
-        cur.execute("""
-            SELECT 1 FROM enlaces
-            WHERE (origen=%s AND destino=%s)
-               OR (origen=%s AND destino=%s)
-        """, (nodo_id, otro_id, otro_id, nodo_id))
-
-        if cur.fetchone():
-            continue
-
-        # Crear enlace automático
+    # Crear enlaces con cada nodo existente
+    for nodo_destino in otros_nodos:
         cur.execute("""
             INSERT INTO enlaces (origen, destino, tipo, ancho_banda)
             VALUES (%s, %s, %s, %s)
-        """, (nodo_id, otro_id, "Automático", "1 Gbps"))
+        """, (nodo_actual, nodo_destino, "fibra", "1Gbps"))
 
-    conn.commit()
+    cur.close()
 # === Agregar enlace ===
 @app.post("/add_link")
 async def add_link(
