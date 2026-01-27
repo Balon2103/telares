@@ -180,17 +180,8 @@ async def login_page(request: Request):
     )
 @app.get("/backup")
 async def manual_backup():
-    """Ejecuta el backup manualmente (modo único)."""
-    try:
-        msg = create_backup()  # llama directo a la función
-        return JSONResponse(
-            {"status": "success", "message": msg}
-        )
-
-    except Exception as e:
-        return JSONResponse(
-            {"status": "error", "message": f"Error al generar el backup: {e}"}
-        )
+    msg = create_backup()
+    return JSONResponse({"status": "success" if "exitoso" in msg else "error", "message": msg})
 # === Eliminar respaldo ===
 @app.delete("/delete_backup/{filename}")
 async def delete_backup(filename: str):
