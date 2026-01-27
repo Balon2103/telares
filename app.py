@@ -14,6 +14,7 @@ import urllib3
 import traceback
 import time
 
+from backups.backup import create_backup
 from db_init import init_db
 
 
@@ -181,25 +182,15 @@ async def login_page(request: Request):
 async def manual_backup():
     """Ejecuta el backup manualmente (modo único)."""
     try:
-        result = subprocess.run(
-            ["python", "backups/backup.py", "--once"],
-            check=True,
-            capture_output=True,
-            text=True
-        )
+        msg = create_backup()  # llama directo a la función
         return JSONResponse(
-            {"status": "success", "message": result.stdout.strip()}
+            {"status": "success", "message": msg}
         )
 
-    except subprocess.CalledProcessError as e:
-        return JSONResponse(
-            {"status": "error", "message": e.stderr.strip() or str(e)}
-        )
     except Exception as e:
         return JSONResponse(
-            {"status": "error", "message": f"Error inesperado: {e}"}
+            {"status": "error", "message": f"Error al generar el backup: {e}"}
         )
-
 # === Eliminar respaldo ===
 @app.delete("/delete_backup/{filename}")
 async def delete_backup(filename: str):
