@@ -182,7 +182,7 @@ async def manual_backup():
     """Ejecuta el backup manualmente (modo único)."""
     try:
         result = subprocess.run(
-            ["python", "/backups/backup.py", "--once"],
+            ["python", "backups/backup.py", "--once"],
             check=True,
             capture_output=True,
             text=True
