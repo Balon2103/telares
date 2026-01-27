@@ -5,9 +5,9 @@ from datetime import datetime
 
 # Configuración de conexión
 DB_NAME = os.getenv("POSTGRES_DB", "telares_db")
-DB_USER = os.getenv("POSTGRES_USER", "postgres")
-DB_PASSWORD = os.getenv("POSTGRES_PASSWORD", "Password123!")
-DB_HOST = os.getenv("POSTGRES_HOST", "postgres_telares")
+DB_USER = os.getenv("POSTGRES_USER", "telares_db_user")
+DB_PASSWORD = os.getenv("POSTGRES_PASSWORD", "r2850sFLGCVPhlTf9LwecNsn2K6kPnl0")
+DB_HOST = os.getenv("POSTGRES_HOST", "dpg-d5sj20fpm1nc73cds5j0-a")
 
 # Carpeta de respaldo y log
 BACKUP_DIR = "/backups"
