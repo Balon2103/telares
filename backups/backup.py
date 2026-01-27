@@ -3,16 +3,12 @@ import time
 import subprocess
 from datetime import datetime
 
-# 🔑 pg_dump correcto en Render (PostgreSQL 18)
-PG_DUMP = "/usr/lib/postgresql/18/bin/pg_dump"
-
 # 🔗 URL de conexión (Render la provee)
 DATABASE_URL = os.getenv("DATABASE_URL")
-
 if not DATABASE_URL:
-    raise RuntimeError("DATABASE_URL no está definida en las variables de entorno")
+    raise RuntimeError("DATABASE_URL no está definida")
 
-# 📁 Carpeta de respaldo (RELATIVA al proyecto)
+# Carpeta de respaldo
 BACKUP_DIR = "backups"
 LOG_FILE = os.path.join(BACKUP_DIR, "backup_log.txt")
 
@@ -25,11 +21,9 @@ def create_backup():
     filename = os.path.join(BACKUP_DIR, f"respaldo_{timestamp}.sql")
 
     command = [
-        PG_DUMP,
-        "--dbname",
-        DATABASE_URL,
-        "-f",
-        filename,
+        "pg_dump",           # ✔ llamar directo al binario en PATH
+        "--dbname", DATABASE_URL,
+        "-f", filename
     ]
 
     try:
@@ -37,7 +31,7 @@ def create_backup():
             command,
             check=True,
             capture_output=True,
-            text=True,
+            text=True
         )
         msg = f"[{datetime.now()}] Respaldo exitoso: {filename}\n"
 
@@ -53,20 +47,3 @@ def create_backup():
         log.write(msg)
 
     return msg
-
-
-if __name__ == "__main__":
-    import sys
-
-    mode = "auto"
-    if len(sys.argv) > 1 and sys.argv[1] == "--once":
-        mode = "once"
-
-    print("Respaldo realizado en la base de datos")
-
-    if mode == "once":
-        create_backup()
-    else:
-        while True:
-            create_backup()
-            time.sleep(3600)  # cada 1 hora
