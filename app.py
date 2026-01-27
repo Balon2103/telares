@@ -14,12 +14,14 @@ import urllib3
 import traceback
 import time
 
-
+from db_init import init_db
 
 
 app = FastAPI()
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-
+@app.on_event("startup")
+def startup():
+    init_db()
 # Configurar templates y archivos estáticos
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
