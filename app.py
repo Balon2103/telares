@@ -1,3 +1,4 @@
+from datetime import datetime
 from fastapi import FastAPI, Request, Response, UploadFile, File, Form
 from fastapi.responses import HTMLResponse, FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -32,7 +33,7 @@ app.add_middleware(
     same_site="none",
     https_only=True
 )
-BACKUP_DIR = "/backups"
+BACKUP_DIR = "backups"
 NETBOX_URL = os.getenv(
     "NETBOX_URL",
     "https://vcca1890.cloud.netboxapp.com/api/"
@@ -727,11 +728,10 @@ async def update_node(node_id: int, request: Request):
     return {"status": "success"}
 @app.get("/list_backups")
 async def list_backups():
-    if not os.path.exists(BACKUP_DIR):
-        os.makedirs(BACKUP_DIR)
+    os.makedirs(BACKUP_DIR, exist_ok=True)
 
     files = []
-    for f in os.listdir(BACKUP_DIR):
+    for f in sorted(os.listdir(BACKUP_DIR), reverse=True):  # los más recientes primero
         if f.endswith(".sql"):
             path = os.path.join(BACKUP_DIR, f)
             size = round(os.path.getsize(path) / 1024, 2)  # KB
@@ -739,11 +739,10 @@ async def list_backups():
             files.append({
                 "name": f,
                 "size": f"{size} KB",
-                "date": __import__("datetime").datetime.fromtimestamp(date).strftime("%Y-%m-%d %H:%M:%S")
+                "date": datetime.fromtimestamp(date).strftime("%Y-%m-%d %H:%M:%S")
             })
 
     return JSONResponse(content={"status": "success", "files": files})
-
 @app.get("/netbox_api/get_netvis_data")
 async def get_netvis_data():
     """
