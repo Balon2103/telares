@@ -1,49 +1,62 @@
 import os
-import time
-import subprocess
+import psycopg2
 from datetime import datetime
 
-# 🔗 URL de conexión (Render la provee)
 DATABASE_URL = os.getenv("DATABASE_URL")
-if not DATABASE_URL:
-    raise RuntimeError("DATABASE_URL no está definida")
-
-# Carpeta de respaldo
 BACKUP_DIR = "backups"
-LOG_FILE = os.path.join(BACKUP_DIR, "backup_log.txt")
-
+os.makedirs(BACKUP_DIR, exist_ok=True)
 
 def create_backup():
-    """Genera un respaldo de la base de datos PostgreSQL."""
-    os.makedirs(BACKUP_DIR, exist_ok=True)
-
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    filename = os.path.join(BACKUP_DIR, f"respaldo_{timestamp}.sql")
-
-    command = [
-        "pg_dump",           # ✔ llamar directo al binario en PATH
-        "--dbname", DATABASE_URL,
-        "-f", filename
-    ]
+    backup_file = os.path.join(BACKUP_DIR, f"respaldo_{timestamp}.sql")
 
     try:
-        result = subprocess.run(
-            command,
-            check=True,
-            capture_output=True,
-            text=True
-        )
-        msg = f"[{datetime.now()}] Respaldo exitoso: {filename}\n"
+        conn = psycopg2.connect(DATABASE_URL, sslmode="require")
+        cur = conn.cursor()
 
-    except subprocess.CalledProcessError as e:
-        msg = (
-            f"[{datetime.now()}] Error al generar respaldo:\n"
-            f"Comando: {' '.join(command)}\n"
-            f"Error: {e.stderr.strip() if e.stderr else str(e)}\n"
-        )
+        # Obtener todas las tablas del schema public
+        cur.execute("""
+            SELECT table_name FROM information_schema.tables
+            WHERE table_schema = 'public' AND table_type='BASE TABLE';
+        """)
+        tables = [row[0] for row in cur.fetchall()]
 
-    print(msg)
-    with open(LOG_FILE, "a", encoding="utf-8") as log:
-        log.write(msg)
+        with open(backup_file, "w", encoding="utf-8") as f:
+            for table in tables:
+                # Escribimos un DROP TABLE para no duplicar
+                f.write(f"DROP TABLE IF EXISTS {table} CASCADE;\n")
 
-    return msg
+                # Obtener el CREATE TABLE
+                cur.execute(f"SELECT 'CREATE TABLE ' || relname || E' (\n' || "
+                            f"array_to_string(array_agg(column_defs.column_def), E',\n') || E'\n);' "
+                            f"FROM (SELECT c.relname, "
+                            f"c.attname || ' ' || pg_catalog.format_type(c.atttypid, c.atttypmod) || "
+                            f"CASE WHEN c.attnotnull THEN ' NOT NULL' ELSE '' END as column_def "
+                            f"FROM pg_class c "
+                            f"JOIN pg_attribute a ON a.attrelid = c.oid "
+                            f"WHERE c.relkind = 'r' AND a.attnum > 0 AND c.relname = '{table}') column_defs "
+                            f"GROUP BY relname;")
+                create_table_sql = cur.fetchone()[0]
+                f.write(create_table_sql + "\n\n")
+
+                # Exportar datos
+                cur.execute(f"SELECT * FROM {table};")
+                rows = cur.fetchall()
+                if rows:
+                    for row in rows:
+                        values = []
+                        for val in row:
+                            if val is None:
+                                values.append("NULL")
+                            else:
+                                values.append("'" + str(val).replace("'", "''") + "'")
+                        f.write(f"INSERT INTO {table} VALUES ({', '.join(values)});\n")
+                f.write("\n")
+
+        cur.close()
+        conn.close()
+
+        return f"[{datetime.now()}] Respaldo exitoso: {backup_file}"
+
+    except Exception as e:
+        return f"[{datetime.now()}] Error al generar respaldo: {e}"
