@@ -53,8 +53,17 @@
         <div class="flex items-center gap-4">
           {% if user %}
           <div class="flex items-center gap-2 text-sm font-medium">
-            <i data-lucide="user"></i>
+            <!-- Foto de perfil simulada -->
+            <img
+              src="https://i.pravatar.cc/40?u={{ user.username }}"
+              alt="Foto de {{ user.username }}"
+              class="w-8 h-8 rounded-full border-2 border-white shadow-sm"
+            />
+
+            <!-- Nombre del usuario -->
             <div class="capitalize">{{ user.username }}</div>
+
+            <!-- Botón de logout -->
             <a
               href="/logout"
               class="flex items-center gap-1 text-white hover:text-red-600 transition ml-2"
@@ -64,7 +73,7 @@
             </a>
           </div>
           {% else %}
-          <a href="/login" class="btn-login">
+          <a href="/login" class="btn-login flex items-center gap-1">
             <i data-lucide="log-in" class="w-4 h-4"></i>
             <span>Iniciar sesión</span>
           </a>
@@ -297,7 +306,10 @@
           <div id="network" class="network-container"></div>
         </div>
       </section>
-
+      <div
+        id="toast-container"
+        class="fixed top-5 right-5 z-50 flex flex-col gap-2"
+      ></div>
       <!-- Respaldos disponibles -->
       <section class="card">
         <h3 class="section-title">
@@ -679,7 +691,7 @@
               "<p class='status-error'>Error de conexión al servidor.</p>";
           }
         };
-        await loadNodes(); 
+        await loadNodes();
         // =====================
         async function loadNetVisTopology(force = false) {
           if (netvisLoaded && !force) return;
@@ -1154,11 +1166,41 @@
       const closeScheduleModal = document.getElementById("closeScheduleModal");
       const cancelSchedule = document.getElementById("cancelSchedule");
       const scheduleForm = document.getElementById("scheduleForm");
+      const toastContainer = document.getElementById("toast-container");
 
+      // Función para mostrar mensajes tipo toast
+      function showToast(message, type = "success") {
+        const toast = document.createElement("div");
+        toast.className = `
+      flex items-center gap-2 p-4 rounded-lg shadow-lg text-white
+      ${type === "success" ? "bg-green-500" : "bg-red-500"}
+      animate-fadeIn animate-fadeOut
+    `;
+        toast.innerHTML = `
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2"
+           viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        ${
+          type === "success"
+            ? '<path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path>'
+            : '<path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>'
+        }
+      </svg>
+      <span>${message}</span>
+    `;
+        toastContainer.appendChild(toast);
+
+        // Desaparece después de 3 segundos
+        setTimeout(() => {
+          toast.remove();
+        }, 3000);
+      }
+
+      // Abrir modal
       scheduleBtn?.addEventListener("click", () => {
         scheduleModal.classList.remove("hidden");
       });
 
+      // Cerrar modal
       closeScheduleModal?.addEventListener("click", () => {
         scheduleModal.classList.add("hidden");
       });
@@ -1167,7 +1209,7 @@
         scheduleModal.classList.add("hidden");
       });
 
-      // Guardar configuración (mock)
+      // Guardar configuración
       scheduleForm?.addEventListener("submit", (e) => {
         e.preventDefault();
 
@@ -1179,14 +1221,40 @@
 
         console.log("Configuración respaldo automático:", config);
 
-        // 👉 Aquí luego llamas a tu API
-        // fetch("/schedule_backup", { ... })
-
-        alert("Configuración guardada correctamente");
+        showToast("¡Configuración guardada correctamente!", "success");
         scheduleModal.classList.add("hidden");
       });
 
       lucide.createIcons();
     </script>
+
+    <style>
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(-10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      @keyframes fadeOut {
+        from {
+          opacity: 1;
+          transform: translateY(0);
+        }
+        to {
+          opacity: 0;
+          transform: translateY(-10px);
+        }
+      }
+      .animate-fadeIn {
+        animation: fadeIn 0.3s ease forwards;
+      }
+      .animate-fadeOut {
+        animation: fadeOut 0.3s ease forwards 2.7s;
+      }
+    </style>
   </body>
 </html>

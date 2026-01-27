@@ -482,7 +482,7 @@ def crear_enlaces_por_ubicacion(conn, netbox_id, ubicacion):
         cur.execute("""
             INSERT INTO enlaces (origen, destino, tipo, ancho_banda)
             VALUES (%s, %s, %s, %s)
-        """, (nodo_actual, nodo_destino, "fibra", "1Gbps"))
+        """, (nodo_actual, nodo_destino, "Ethernet", "100Mb/s"))
 
     cur.close()
 # === Agregar enlace ===
