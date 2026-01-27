@@ -66,10 +66,10 @@ app.add_middleware(
 # === Conexión a la base de datos PostgreSQL ===
 def get_connection():
     return psycopg2.connect(
-        host=os.getenv("DB_HOST", "postgres_telares"),
+        host=os.getenv("DB_HOST", "dpg-d5sj20fpm1nc73cds5j0-a"),
         dbname=os.getenv("DB_NAME", "telares_db"),
-        user=os.getenv("DB_USER", "postgres"),
-        password=os.getenv("DB_PASSWORD", "1234")
+        user=os.getenv("DB_USER", "telares_db_user"),
+        password=os.getenv("DB_PASSWORD", "r2850sFLGCVPhlTf9LwecNsn2K6kPnl0")
     )
 def get_site_id(site_name="Principal"):
     r = requests.get(
