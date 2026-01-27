@@ -380,7 +380,7 @@
         lucide.createIcons();
         async function checkSession() {
           try {
-            const res = await fetch("/session"); // endpoint de sesión
+            const res = await fetch("https://telares.onrender.com/session"); // endpoint de sesión
             if (!res.ok) return;
 
             const data = await res.json();
@@ -460,7 +460,7 @@
               '<span class="status-info"><i data-lucide="loader-2" class="status-icon animate-spin"></i> Ejecutando respaldo...</span>';
             lucide.createIcons();
             try {
-              const res = await fetch("/backup");
+              const res = await fetch("https://telares.onrender.com/backup");
               const data = await res.json();
               msg.innerHTML =
                 data.status === "success"
@@ -489,7 +489,7 @@
           lucide.createIcons();
 
           try {
-            const res = await fetch("/list_backups");
+            const res = await fetch("https://telares.onrender.com/list_backups");
             const data = await res.json();
 
             if (data.status === "success" && data.files.length > 0) {
@@ -516,7 +516,7 @@
          <td class="text-center">
            <div class="flex justify-center items-center gap-3">
              <a
-               href="/download_backup/${file.name || file}"
+               href="https://telares.onrender.com/download_backup/${file.name || file}"
                class="action-btn action-download flex items-center gap-1"
                title="Descargar respaldo"
              >
@@ -591,7 +591,7 @@
 
           try {
             const res = await fetch(
-              `/delete_backup/${encodeURIComponent(file)}`,
+              `https://telares.onrender.com/delete_backup/${encodeURIComponent(file)}`,
               { method: "DELETE" },
             );
 
@@ -615,7 +615,7 @@
         // 🔹 Exponer la función para que pueda llamarse desde el formulario
         window.loadNodes = async function loadNodes() {
           try {
-            const res = await fetch("/get_nodes");
+            const res = await fetch("https://telares.onrender.com/get_nodes");
             const data = await res.json();
 
             if (data.status !== "success" || !Array.isArray(data.nodes)) {
@@ -692,7 +692,7 @@
             "<p class='status-info text-center'>Cargando topología...</p>";
 
           try {
-            const res = await fetch("/netbox_api/get_netvis_data");
+            const res = await fetch("https://telares.onrender.com/netbox_api/get_netvis_data");
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
             const data = await res.json();
@@ -844,7 +844,7 @@
                 formData.append("ancho_banda", "1Gbps");
 
                 try {
-                  const res = await fetch("/add_link", {
+                  const res = await fetch("https://telares.onrender.com/add_link", {
                     method: "POST",
                     body: formData,
                   });

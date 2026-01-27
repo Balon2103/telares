@@ -55,7 +55,7 @@ from fastapi.middleware.cors import CORSMiddleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "https://telares-morros.vercel.app"
+        "https://telares-morros.vercel.app", "https://telares.onrender.com"
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -134,8 +134,12 @@ def resolve_netbox_ids(rol):
 async def home(request: Request):
     """Página principal con listado de backups y gráfico"""
 
-    # Usuario opcional (si existe sesión la toma, si no, no importa)
+    # 🔐 1️⃣ Verificar sesión
+    print("🧠 SESSION:", dict(request.session))
+
     user = request.session.get("user")
+    if not user:
+        return RedirectResponse("/login", status_code=302)
 
     backups = []
     if os.path.exists(BACKUP_DIR):
@@ -155,13 +159,14 @@ async def home(request: Request):
         "sizes": [float(b["size"].replace(" KB", "")) for b in backups],
     }
 
+    # 🟢 2️⃣ Enviar usuario al template
     return templates.TemplateResponse(
         "index.html",
         {
             "request": request,
             "backups": backups,
             "chart_data": chart_data,
-            "user": user,  # puede ser None y no pasa nada
+            "user": user,  # 👈 IMPORTANTE
         },
     )
 @app.get("/login", response_class=HTMLResponse)
