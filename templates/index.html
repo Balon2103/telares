@@ -300,20 +300,21 @@
           <!-- Network -->
           <div id="network" class="network-container"></div>
         </div>
+        <div class="legend">
+          <h4>Leyenda de la Topología</h4>
+          <ul>
+            <li><span class="legend-node router"></span> Router</li>
+            <li><span class="legend-node switch"></span> Switch</li>
+            <li><span class="legend-node server"></span> Servidor</li>
+            <li><span class="legend-node pc"></span> PC / Usuario</li>
+            <li><span class="legend-node error"></span> Falla de conexión</li>
+          </ul>
+        </div>
         <div id="node-info" class="node-panel">
           <p>Selecciona un nodo para ver su estado</p>
         </div>
       </section>
-      <div class="legend">
-        <h4>Leyenda de la Topología</h4>
-        <ul>
-          <li><span class="legend-node router"></span> Router</li>
-          <li><span class="legend-node switch"></span> Switch</li>
-          <li><span class="legend-node server"></span> Servidor</li>
-          <li><span class="legend-node pc"></span> PC / Usuario</li>
-          <li><span class="legend-node error"></span> Falla de conexión</li>
-        </ul>
-      </div>
+
       <div
         id="toast-container"
         class="fixed top-5 right-5 z-50 flex flex-col gap-2"
@@ -944,21 +945,39 @@
       function showNodeInfo(node) {
         const panel = document.getElementById("node-info");
 
-        let estado = "🟢 Conectado correctamente";
+        let estadoTexto = "Conectividad operativa";
+        let estadoIcono = "wifi";
+        let estadoClase = "text-green-600";
+
         if (!network.getConnectedEdges(node.id).length) {
-          estado = "🔴 Sin enlaces activos";
+          estadoTexto = "Sin enlaces activos";
+          estadoIcono = "wifi-off";
+          estadoClase = "text-red-600";
         }
 
         panel.innerHTML = `
-    <h3>📡 Información del Nodo</h3>
+    <h3 class="flex items-center gap-2">
+      <i data-lucide="server" class="w-5 h-5 text-indigo-600"></i>
+      Información del Nodo
+    </h3>
+
     <p><strong>Nombre:</strong> ${node.label}</p>
     <p><strong>Rol:</strong> ${node.title || "No definido"}</p>
-    <p><strong>Estado:</strong> ${estado}</p>
+
+    <p class="flex items-center gap-2">
+      <strong>Estado:</strong>
+      <i data-lucide="${estadoIcono}" class="w-4 h-4 ${estadoClase}"></i>
+      <span class="${estadoClase}">${estadoTexto}</span>
+    </p>
+
     <p><strong>Descripción:</strong>
-      Este dispositivo participa en la topología y su conexión
-      refleja el estado actual de la red según NetBox.
+      Este nodo representa un dispositivo dentro de la topología lógica de la red.
+      Su estado es determinado dinámicamente a partir de la disponibilidad de
+      enlaces activos.
     </p>
   `;
+
+        lucide.createIcons();
       }
       /* ============================
           GRÁFICO DE DISPOSITIVOS

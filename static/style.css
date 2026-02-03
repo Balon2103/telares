@@ -63,14 +63,7 @@ body {
   padding: 0.5rem;
   border-radius: 0.5rem;
 }
-.node-panel {
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 12px;
-  margin-top: 10px;
-  font-size: 14px;
-}
+
 .company-name {
   font-size: 1.25rem;
   font-weight: 700;
@@ -633,43 +626,79 @@ body {
 .btn-second:hover {
   background-color: #e0e7ff;
 }
+/* =========================
+   Leyenda de la topología
+   ========================= */
+
 .legend {
-  background: #f9fafb;
-  padding: 12px;
-  border-radius: 8px;
-  font-size: 14px;
+  background-color: #f9fafb;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  color: #374151;
+  box-sizing: border-box;
 }
 
 .legend ul {
   list-style: none;
   padding: 0;
+  margin: 0;
 }
 
 .legend li {
   display: flex;
   align-items: center;
-  margin-bottom: 6px;
+  gap: 0.5rem;
+  margin-bottom: 0.375rem;
 }
+
+.legend li:last-child {
+  margin-bottom: 0;
+}
+
+/* =========================
+   Indicadores de nodo
+   ========================= */
 
 .legend-node {
-  width: 14px;
-  height: 14px;
-  border-radius: 4px;
-  margin-right: 8px;
+  width: 0.875rem;
+  height: 0.875rem;
+  border-radius: 0.25rem;
+  flex-shrink: 0;
 }
 
+/* Colores semánticos */
 .legend-node.router {
-  background: #3b82f6;
+  background-color: #3b82f6; /* Azul */
 }
+
 .legend-node.switch {
-  background: #22c55e;
+  background-color: #22c55e; /* Verde */
 }
+
 .legend-node.server {
-  background: #f97316;
+  background-color: #f97316; /* Naranja */
 }
+
 .legend-node.pc {
-  background: #6b7280;
+  background-color: #6b7280; /* Gris */
 }
+
 .legend-node.error {
-  background: #ef4444;
+  background-color: #ef4444; /* Rojo */
+}
+
+/* =========================
+   Panel de información
+   ========================= */
+
+.node-panel {
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  margin-top: 0.625rem;
+  font-size: 0.875rem;
+  color: #374151;
+  box-sizing: border-box;
 }
