@@ -344,6 +344,21 @@ async def network_traffic():
     return {
         "traffic_mbps": traffic_mbps
     }
+ 
+def link_exists(cur, a, b):
+    cur.execute("""
+        SELECT 1 FROM enlaces
+        WHERE (origen=%s AND destino=%s)
+           OR (origen=%s AND destino=%s)
+    """, (a, b, b, a))
+    return cur.fetchone() is not None
+
+
+def create_link(cur, origen, destino):
+    cur.execute("""
+        INSERT INTO enlaces (origen, destino, tipo, ancho_banda)
+        VALUES (%s, %s, %s, %s)
+    """, (origen, destino, "LAN", "1 Gbps")) 
     
 @app.post("/auto_create_links")
 async def auto_create_links():
@@ -351,45 +366,37 @@ async def auto_create_links():
     cur = conn.cursor(cursor_factory=RealDictCursor)
 
     cur.execute("""
-        SELECT id, ubicacion
+        SELECT id, ubicacion, rol
         FROM nodos
         WHERE ubicacion IS NOT NULL
     """)
     nodes = cur.fetchall()
 
     created = 0
-    seen = set()
 
-    for i in range(len(nodes)):
-        for j in range(i + 1, len(nodes)):
-            n1 = nodes[i]
-            n2 = nodes[j]
+    # Agrupar nodos por ubicación
+    locations = {}
+    for n in nodes:
+        locations.setdefault(n["ubicacion"], []).append(n)
 
-            if n1["ubicacion"] == n2["ubicacion"]:
-                key = tuple(sorted([n1["id"], n2["id"]]))
-                if key in seen:
-                    continue
-                cur.execute("""
-                    SELECT 1 FROM enlaces
-                    WHERE (origen=%s AND destino=%s)
-                       OR (origen=%s AND destino=%s)
-                """, (n1["id"], n2["id"], n2["id"], n1["id"]))
+    for ubicacion, group in locations.items():
+        routers = [n for n in group if n["rol"] == "router"]
+        switches = [n for n in group if n["rol"] == "switch"]
+        endpoints = [n for n in group if n["rol"] in ("pc", "ordenador", "servidor")]
 
-                if cur.fetchone():
-                    continue
+        # 1️⃣ Router → Switch
+        for router in routers:
+            for switch in switches:
+                if not link_exists(cur, router["id"], switch["id"]):
+                    create_link(cur, router["id"], switch["id"])
+                    created += 1
 
-                cur.execute("""
-                    INSERT INTO enlaces (origen, destino, tipo, ancho_banda)
-                    VALUES (%s, %s, %s, %s)
-                """, (
-                    n1["id"],
-                    n2["id"],
-                    "LAN",
-                    "1 Gbps"
-                ))
-
-                created += 1
-                seen.add(key)
+        # 2️⃣ Switch → Dispositivos finales
+        for switch in switches:
+            for end in endpoints:
+                if not link_exists(cur, switch["id"], end["id"]):
+                    create_link(cur, switch["id"], end["id"])
+                    created += 1
 
     conn.commit()
     cur.close()
@@ -398,7 +405,7 @@ async def auto_create_links():
     return {
         "status": "success",
         "created_links": created
-    }    
+    }
 @app.delete("/delete_node/{node_id}")
 async def delete_node(node_id: int):
     conn = get_connection()
