@@ -53,14 +53,11 @@
         <div class="flex items-center gap-4">
           {% if user %}
           <div class="flex items-center gap-2 text-sm font-medium">
-            <!-- Foto de perfil simulada -->
             <img
               src="https://i.pravatar.cc/40?u={{ user.username }}"
               alt="Foto de {{ user.username }}"
               class="w-8 h-8 rounded-full border-2 border-white shadow-sm"
             />
-
-            <!-- Nombre del usuario -->
             <div class="capitalize">{{ user.username }}</div>
 
             <!-- Botón de logout -->
@@ -220,7 +217,6 @@
         </div>
       </div>
 
-      <!-- Registro de Nodos -->
       <div class="card">
         <h3 class="section-title">
           <i data-lucide="server" class="section-icon text-blue-600"></i>
@@ -270,7 +266,6 @@
         <div id="grid-nodos" class="capitalize"></div>
       </div>
 
-      <!-- Gráficos y Topología -->
       <section class="charts-grid">
         <div class="card" style="text-transform: capitalize">
           <h3 class="section-title">
@@ -304,6 +299,16 @@
 
           <!-- Network -->
           <div id="network" class="network-container"></div>
+        </div>
+        <div class="legend">
+          <h4>Leyenda de la Topología</h4>
+          <ul>
+            <li><span class="legend-node router"></span> Router</li>
+            <li><span class="legend-node switch"></span> Switch</li>
+            <li><span class="legend-node server"></span> Servidor</li>
+            <li><span class="legend-node pc"></span> PC / Usuario</li>
+            <li><span class="legend-node error"></span> Falla de conexión</li>
+          </ul>
         </div>
       </section>
       <div
@@ -375,13 +380,11 @@
       let currentPage = 1;
       const backupsPerPage = 5;
       let totalPages = 1;
-
       let gridInstance = null;
       let editNodeId = null;
       let network = null;
       let savedPositions = {};
       let netvisLoaded = false;
-      // Referencias DOM (se llenan luego)
       let gridContainer = null;
       let tbodyBackups = null;
       let pagination = null;
@@ -505,7 +508,6 @@
             const data = await res.json();
 
             if (data.status === "success" && data.files.length > 0) {
-              // Ordenar por fecha (más reciente primero)
               const filesSorted = [...data.files].sort((a, b) => {
                 const dateA = new Date(a.date || 0);
                 const dateB = new Date(b.date || 0);
@@ -517,7 +519,6 @@
               const end = start + backupsPerPage;
               const pageFiles = filesSorted.slice(start, end);
 
-              // Construcción de filas con iconos modernos
               tbodyBackups.innerHTML = pageFiles
                 .map(
                   (file) => `

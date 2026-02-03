@@ -47,9 +47,50 @@ body {
   color: #4f46e5;
   font-weight: 500;
   text-decoration: none;
-  transition: background 0.2s ease, transform 0.1s ease;
+  transition:
+    background 0.2s ease,
+    transform 0.1s ease;
+}
+.legend {
+  background: #f9fafb;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 14px;
 }
 
+.legend ul {
+  list-style: none;
+  padding: 0;
+}
+
+.legend li {
+  display: flex;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.legend-node {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  margin-right: 8px;
+}
+
+.legend-node.router {
+  background: #3b82f6;
+}
+.legend-node.switch {
+  background: #22c55e;
+}
+.legend-node.server {
+  background: #f97316;
+}
+.legend-node.pc {
+  background: #6b7280;
+}
+.legend-node.error {
+  background: #ef4444;
+}
 .btn-login:hover {
   background: #5d77c5;
   color: white;
@@ -105,14 +146,17 @@ body {
 .card {
   background: white;
   border-radius: 12px;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  box-shadow:
+    0 1px 3px 0 rgba(0, 0, 0, 0.05),
+    0 1px 2px 0 rgba(0, 0, 0, 0.06);
   border: 1px solid var(--gray-200);
   padding: 1.5rem;
   transition: all 0.2s ease;
 }
 
 .card:hover {
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.07),
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.07),
     0 2px 4px -1px rgba(0, 0, 0, 0.05);
 }
 
@@ -173,7 +217,8 @@ body {
 .btn-primary:hover {
   background: linear-gradient(135deg, var(--primary-dark), var(--primary));
   transform: translateY(-1px);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
     0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 

@@ -24,7 +24,6 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 @app.on_event("startup")
 def startup():
     init_db()
-# Configurar templates y archivos estáticos
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 app.add_middleware(
@@ -133,12 +132,11 @@ def resolve_netbox_ids(rol):
         "role_id": role_id,
         "device_type_id": device_type_id
     }
-# === Página principal ===
+
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
-    """Página principal con listado de backups y gráfico"""
+    """Página principal"""
 
-    # 🔐 1️⃣ Verificar sesión
     print("🧠 SESSION:", dict(request.session))
 
     user = request.session.get("user")
@@ -163,7 +161,6 @@ async def home(request: Request):
         "sizes": [float(b["size"].replace(" KB", "")) for b in backups],
     }
 
-    # 🟢 2️⃣ Enviar usuario al template
     return templates.TemplateResponse(
         "index.html",
         {
@@ -183,7 +180,7 @@ async def login_page(request: Request):
 async def manual_backup():
     msg = create_backup()
     return JSONResponse({"status": "success" if "exitoso" in msg else "error", "message": msg})
-# === Eliminar respaldo ===
+
 @app.delete("/delete_backup/{filename}")
 async def delete_backup(filename: str):
     filepath = os.path.join(BACKUP_DIR, filename)
@@ -213,7 +210,6 @@ async def download_backup(filename: str):
     return FileResponse(path, filename=filename)
 
 def create_netbox_device(nombre, rol):
-    # Resolver IDs reales desde NetBox
     site_id = get_site_id("Principal")
     role_id = get_role_id(rol)
 
@@ -301,10 +297,8 @@ async def add_node(request: Request):
         ubicacion = data["ubicacion"]
         rol = data["rol"]
 
-        # 🔹 1. Crear en NetBox
         netbox_id = create_netbox_device(nombre, rol)
 
-        # 🔹 2. Guardar en PostgreSQL
         conn = get_connection()
         cur = conn.cursor()
         cur.execute("""
@@ -330,7 +324,6 @@ async def add_node(request: Request):
             "status": "error",
             "message": str(e)
         }
-# === Eliminar nodo ===
 
 @app.get("/network/traffic")
 async def network_traffic():
@@ -346,7 +339,6 @@ async def network_traffic():
     cur.close()
     conn.close()
 
-    # Simulación realista
     traffic_mbps = round((enlaces * 35 + nodos * 12) * 0.8, 2)
 
     return {
@@ -358,7 +350,6 @@ async def auto_create_links():
     conn = get_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
 
-    # Obtener nodos con ubicación
     cur.execute("""
         SELECT id, ubicacion
         FROM nodos
@@ -374,13 +365,10 @@ async def auto_create_links():
             n1 = nodes[i]
             n2 = nodes[j]
 
-            # 🔑 MISMA UBICACIÓN
             if n1["ubicacion"] == n2["ubicacion"]:
                 key = tuple(sorted([n1["id"], n2["id"]]))
                 if key in seen:
                     continue
-
-                # Verificar si ya existe el enlace
                 cur.execute("""
                     SELECT 1 FROM enlaces
                     WHERE (origen=%s AND destino=%s)
@@ -390,7 +378,6 @@ async def auto_create_links():
                 if cur.fetchone():
                     continue
 
-                # Crear enlace
                 cur.execute("""
                     INSERT INTO enlaces (origen, destino, tipo, ancho_banda)
                     VALUES (%s, %s, %s, %s)
@@ -444,10 +431,9 @@ async def delete_node(node_id: int):
     return {"status": "success"}
 
 
-# === Obtener todos los nodos ===
 @app.get("/get_nodes")
 async def get_nodes():
-    """Devuelve todos los nodos registrados en la base de datos (sin posiciones)."""
+    """Devuelve todos los nodos"""
     try:
         conn = get_connection()
         cur = conn.cursor()
@@ -466,14 +452,12 @@ async def get_nodes():
 def crear_enlaces_por_ubicacion(conn, netbox_id, ubicacion):
     cur = conn.cursor()
 
-    # Buscar todos los nodos existentes en la misma ubicación
     cur.execute("""
         SELECT id FROM nodos
         WHERE ubicacion = %s AND netbox_id != %s
     """, (ubicacion, netbox_id))
     otros_nodos = [row[0] for row in cur.fetchall()]
 
-    # Nodo actual
     cur.execute("SELECT id FROM nodos WHERE netbox_id = %s", (netbox_id,))
     nodo_actual = cur.fetchone()[0]
 
