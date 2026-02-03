@@ -300,17 +300,20 @@
           <!-- Network -->
           <div id="network" class="network-container"></div>
         </div>
-        <div class="legend">
-          <h4>Leyenda de la Topología</h4>
-          <ul>
-            <li><span class="legend-node router"></span> Router</li>
-            <li><span class="legend-node switch"></span> Switch</li>
-            <li><span class="legend-node server"></span> Servidor</li>
-            <li><span class="legend-node pc"></span> PC / Usuario</li>
-            <li><span class="legend-node error"></span> Falla de conexión</li>
-          </ul>
+        <div id="node-info" class="node-panel">
+          <p>Selecciona un nodo para ver su estado</p>
         </div>
       </section>
+      <div class="legend">
+        <h4>Leyenda de la Topología</h4>
+        <ul>
+          <li><span class="legend-node router"></span> Router</li>
+          <li><span class="legend-node switch"></span> Switch</li>
+          <li><span class="legend-node server"></span> Servidor</li>
+          <li><span class="legend-node pc"></span> PC / Usuario</li>
+          <li><span class="legend-node error"></span> Falla de conexión</li>
+        </ul>
+      </div>
       <div
         id="toast-container"
         class="fixed top-5 right-5 z-50 flex flex-col gap-2"
@@ -794,6 +797,14 @@
                 linkingFromNode = params.nodes[0];
               }
             });
+            network.on("click", async (params) => {
+              if (params.nodes.length === 0) return;
+
+              const nodeId = params.nodes[0];
+              const node = nodes.get(nodeId);
+
+              showNodeInfo(node);
+            });
             network.on("dragEnd", function (params) {
               if (!linkingFromNode) return;
 
@@ -930,7 +941,25 @@
         }
         window.loadNetVisTopology = loadNetVisTopology;
       });
+      function showNodeInfo(node) {
+        const panel = document.getElementById("node-info");
 
+        let estado = "🟢 Conectado correctamente";
+        if (!network.getConnectedEdges(node.id).length) {
+          estado = "🔴 Sin enlaces activos";
+        }
+
+        panel.innerHTML = `
+    <h3>📡 Información del Nodo</h3>
+    <p><strong>Nombre:</strong> ${node.label}</p>
+    <p><strong>Rol:</strong> ${node.title || "No definido"}</p>
+    <p><strong>Estado:</strong> ${estado}</p>
+    <p><strong>Descripción:</strong>
+      Este dispositivo participa en la topología y su conexión
+      refleja el estado actual de la red según NetBox.
+    </p>
+  `;
+      }
       /* ============================
           GRÁFICO DE DISPOSITIVOS
        ============================ */
