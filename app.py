@@ -35,12 +35,12 @@ app.add_middleware(
 BACKUP_DIR = "backups"
 NETBOX_URL = os.getenv(
     "NETBOX_URL",
-    "https://vcca1890.cloud.netboxapp.com/api/"
+    "https://whih7783.cloud.netboxapp.com/api/"
 )
 
 NETBOX_API_TOKEN = os.getenv(
     "NETBOX_API_TOKEN",
-    "77871449c1a5fb13a81aa12d4e4632bea4490bc9"
+    "dCD27AJ9s5KeXVVQZDv2NEXZnvfPUHwTdOA0UtEx"
 )
 
 HEADERS = {
