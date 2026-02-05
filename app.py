@@ -40,7 +40,7 @@ NETBOX_URL = os.getenv(
 
 NETBOX_API_TOKEN = os.getenv(
     "NETBOX_API_TOKEN",
-    "dCD27AJ9s5KeXVVQZDv2NEXZnvfPUHwTdOA0UtEx"
+    "tmlfSr1ShEPgpLJlUPG2qgcJvBUVsN6rxkbf06vT"
 )
 
 HEADERS = {
