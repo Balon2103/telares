@@ -444,46 +444,56 @@ async def delete_node(node_id: int):
     cur = conn.cursor()
 
     try:
-        cur.execute("SELECT netbox_id FROM nodos WHERE id=%s", (node_id,))
+        # Verificar que el nodo exista
+        cur.execute(
+            "SELECT id, netbox_id FROM nodos WHERE id=%s",
+            (node_id,)
+        )
         row = cur.fetchone()
 
-        if row and row[0]:
-            netbox_id = row[0]
-
-            nb_res = requests.delete(
-                f"{NETBOX_URL}/dcim/devices/{netbox_id}/",
-                headers=HEADERS,
-                timeout=10,
-                verify=True
+        if not row:
+            raise HTTPException(
+                status_code=404,
+                detail="Nodo no encontrado"
             )
 
-            if nb_res.status_code == 403:
-                raise HTTPException(
-                    status_code=403,
-                    detail="NetBox Cloud bloquea DELETE (plan/trial)"
-                )
+        # 🔹 IMPORTANTE:
+        # NO se elimina en NetBox (restricción NetBox Cloud)
+        # NetBox se mantiene como inventario histórico
 
-            if nb_res.status_code not in (204, 404):
-                raise HTTPException(
-                    status_code=500,
-                    detail=f"NetBox error {nb_res.status_code}: {nb_res.text}"
-                )
+        # Eliminar enlaces asociados
+        cur.execute(
+            "DELETE FROM enlaces WHERE origen=%s OR destino=%s",
+            (node_id, node_id)
+        )
 
-        # 🔹 Borrado local SOLO si NetBox OK
-        cur.execute("DELETE FROM enlaces WHERE origen=%s OR destino=%s", (node_id, node_id))
-        cur.execute("DELETE FROM nodos WHERE id=%s", (node_id,))
+        # Eliminar nodo local
+        cur.execute(
+            "DELETE FROM nodos WHERE id=%s",
+            (node_id,)
+        )
 
         conn.commit()
-        return {"status": "success"}
+
+        return {
+            "status": "success",
+            "message": "Nodo eliminado de la topología lógica (NetBox preservado)"
+        }
+
+    except HTTPException:
+        conn.rollback()
+        raise
 
     except Exception as e:
         conn.rollback()
-        raise e
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error interno al eliminar nodo: {str(e)}"
+        )
 
     finally:
         cur.close()
         conn.close()
-
 @app.get("/get_nodes")
 async def get_nodes():
     """Devuelve todos los nodos"""
