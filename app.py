@@ -33,9 +33,10 @@ app.add_middleware(
     https_only=True
 )
 BACKUP_DIR = "backups"
-NETBOX_URL = "https://whih7783.cloud.netboxapp.com/api"
+NETBOX_URL = os.getenv("NETBOX_URL")
 NETBOX_API_TOKEN = os.getenv("NETBOX_API_TOKEN")
 print("NETBOX_API_TOKEN:", NETBOX_API_TOKEN)
+print("NETBOX_URL:", NETBOX_URL)
 HEADERS = {
     "Authorization": f"Token {NETBOX_API_TOKEN}",
     "Accept": "application/json",
