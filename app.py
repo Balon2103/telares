@@ -349,12 +349,13 @@ def link_exists(cur, a, b):
     return cur.fetchone() is not None
 
 
-def create_link(cur, origen, destino):
+def create_link(cur, origen, destino, tipo="LAN", ancho="1 Gbps"):
     cur.execute("""
         INSERT INTO enlaces (origen, destino, tipo, ancho_banda)
         VALUES (%s, %s, %s, %s)
-    """, (origen, destino, "LAN", "1 Gbps")) 
-    
+    """, (origen, destino, tipo, ancho))
+
+
 @app.post("/auto_create_links")
 async def auto_create_links():
     conn = get_connection()
@@ -375,23 +376,31 @@ async def auto_create_links():
         locations.setdefault(n["ubicacion"], []).append(n)
 
     for ubicacion, group in locations.items():
+        # Separar por tipo
         routers = [n for n in group if n["rol"] == "router"]
         switches = [n for n in group if n["rol"] == "switch"]
         endpoints = [n for n in group if n["rol"] in ("pc", "ordenador", "servidor")]
 
-        # 1️⃣ Router → Switch
+        # 1️⃣ Router → Switch (no conectar routers entre sí)
         for router in routers:
             for switch in switches:
                 if not link_exists(cur, router["id"], switch["id"]):
                     create_link(cur, router["id"], switch["id"])
                     created += 1
 
-        # 2️⃣ Switch → Dispositivos finales
+        # 2️⃣ Switch → Endpoints (no conectar switches entre sí)
         for switch in switches:
             for end in endpoints:
                 if not link_exists(cur, switch["id"], end["id"]):
                     create_link(cur, switch["id"], end["id"])
                     created += 1
+
+        # 3️⃣ Opcional: Endpoint → Endpoint solo si es necesario (evitar duplicados)
+        # for i, a in enumerate(endpoints):
+        #     for b in endpoints[i+1:]:
+        #         if not link_exists(cur, a["id"], b["id"]):
+        #             create_link(cur, a["id"], b["id"])
+        #             created += 1
 
     conn.commit()
     cur.close()
