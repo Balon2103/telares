@@ -33,19 +33,13 @@ app.add_middleware(
     https_only=True
 )
 BACKUP_DIR = "backups"
-NETBOX_URL = os.getenv(
-    "NETBOX_URL",
-    "https://whih7783.cloud.netboxapp.com/api/"
-)
-
-NETBOX_API_TOKEN = os.getenv(
-    "NETBOX_API_TOKEN",
-    "tmlfSr1ShEPgpLJlUPG2qgcJvBUVsN6rxkbf06vT"
-)
+NETBOX_URL = "https://whih7783.cloud.netboxapp.com/api"
+NETBOX_API_TOKEN = os.getenv("tmlfSr1ShEPgpLJlUPG2qgcJvBUVsN6rxkbf06vT")
 
 HEADERS = {
     "Authorization": f"Token {NETBOX_API_TOKEN}",
     "Accept": "application/json",
+    "Content-Type": "application/json",
 }
 DEVICE_TYPE_MAP = {
     "router": "Router",
@@ -74,7 +68,7 @@ def get_connection():
     )
 def get_site_id(site_name="Principal"):
     r = requests.get(
-        f"{NETBOX_URL}dcim/sites/",
+        f"{NETBOX_URL}/dcim/sites/",
         headers=HEADERS,
         params={"name": site_name},
         timeout=10,
@@ -89,7 +83,7 @@ def get_site_id(site_name="Principal"):
     return results[0]["id"]
 def get_role_id(role_name):
     r = requests.get(
-        f"{NETBOX_URL}dcim/device-roles/",
+        f"{NETBOX_URL}/dcim/device-roles/",
         headers=HEADERS,
         params={"name": role_name.capitalize()},
         timeout=10,
@@ -104,7 +98,7 @@ def get_role_id(role_name):
     return results[0]["id"]
 def get_device_type_id(model_name):
     r = requests.get(
-        f"{NETBOX_URL}dcim/device-types/",
+        f"{NETBOX_URL}/dcim/device-types/",
         headers=HEADERS,
         params={"model": model_name},
         timeout=10,
@@ -228,7 +222,7 @@ def create_netbox_device(nombre, rol):
     }
 
     res = requests.post(
-        f"{NETBOX_URL}dcim/devices/",
+        f"{NETBOX_URL}/dcim/devices/",
         headers=HEADERS,
         json=payload,
         timeout=10
@@ -262,7 +256,7 @@ async def login(request: Request):
                 status_code=401
             )
 
-        # ✅ guardar sesión
+       
         request.session["user"] = username
         print("✅ SESIÓN GUARDADA:", dict(request.session))
 
@@ -687,7 +681,7 @@ async def update_node(node_id: int, request: Request):
     }
 
     nb_res = requests.patch(
-        f"{NETBOX_URL}dcim/devices/{netbox_id}/",
+        f"{NETBOX_URL}/dcim/devices/{netbox_id}/",
         headers=HEADERS,
         json=payload,
         timeout=10
@@ -735,7 +729,7 @@ async def get_netvis_data():
     try:
         # 🔹 Obtener dispositivos (devices)
         devices_res = requests.get(
-            f"{NETBOX_URL}dcim/devices/?limit=1000",
+            f"{NETBOX_URL}/dcim/devices/?limit=1000",
             headers=HEADERS
         )
         devices_res.raise_for_status()
@@ -759,7 +753,7 @@ async def get_netvis_data():
 
         # 🔹 Obtener cables (links)
         cables_res = requests.get(
-            f"{NETBOX_URL}dcim/cables/?limit=1000",
+            f"{NETBOX_URL}/dcim/cables/?limit=1000",
             headers=HEADERS
         )
         cables_res.raise_for_status()
@@ -790,7 +784,7 @@ async def get_netvis_data():
 @app.get("/netbox_test")
 def netbox_test():
     r = requests.get(
-        f"{NETBOX_URL}dcim/devices/",
+        f"{NETBOX_URL}/dcim/devices/",
         headers=HEADERS,
         timeout=10
     )
