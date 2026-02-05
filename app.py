@@ -1,5 +1,5 @@
 from datetime import datetime
-from fastapi import FastAPI, Request, Response, UploadFile, File, Form
+from fastapi import  FastAPI, HTTPException, Request, Response, UploadFile, File, Form
 from fastapi.responses import HTMLResponse, FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -35,7 +35,7 @@ app.add_middleware(
 BACKUP_DIR = "backups"
 NETBOX_URL = "https://whih7783.cloud.netboxapp.com/api"
 NETBOX_API_TOKEN = os.getenv("tmlfSr1ShEPgpLJlUPG2qgcJvBUVsN6rxkbf06vT")
-
+print("NETBOX_API_TOKEN:", NETBOX_API_TOKEN)
 HEADERS = {
     "Authorization": f"Token {NETBOX_API_TOKEN}",
     "Accept": "application/json",
@@ -283,6 +283,10 @@ def get_session(request: Request):
     }
 @app.post("/add_node")
 async def add_node(request: Request):
+    conn = None
+    cur = None
+    netbox_id = None
+
     try:
         data = await request.json()
 
@@ -291,10 +295,19 @@ async def add_node(request: Request):
         ubicacion = data["ubicacion"]
         rol = data["rol"]
 
+        # 🔹 1. Crear dispositivo en NetBox
         netbox_id = create_netbox_device(nombre, rol)
 
+        if not netbox_id:
+            raise HTTPException(
+                status_code=502,
+                detail="No se pudo crear el dispositivo en el inventario externo"
+            )
+
+        # 🔹 2. Guardar en BD local
         conn = get_connection()
         cur = conn.cursor()
+
         cur.execute("""
             INSERT INTO nodos (nombre, ip, ubicacion, rol, netbox_id)
             VALUES (%s, %s, %s, %s, %s)
@@ -302,10 +315,11 @@ async def add_node(request: Request):
         """, (nombre, ip, ubicacion, rol, netbox_id))
 
         node_id = cur.fetchone()[0]
-        crear_enlaces_por_ubicacion(conn, netbox_id, ubicacion)
+
+        # 🔹 3. Crear enlaces usando ID LOCAL
+        crear_enlaces_por_ubicacion(conn, node_id, ubicacion)
+
         conn.commit()
-        cur.close()
-        conn.close()
 
         return {
             "status": "success",
@@ -313,12 +327,36 @@ async def add_node(request: Request):
             "netbox_id": netbox_id
         }
 
-    except Exception as e:
-        return {
-            "status": "error",
-            "message": str(e)
-        }
+    except HTTPException:
+        if conn:
+            conn.rollback()
+        raise
 
+    except Exception as e:
+        if conn:
+            conn.rollback()
+
+        # 🔥 rollback lógico en NetBox si algo falló
+        if netbox_id:
+            try:
+                requests.delete(
+                    f"{NETBOX_URL}/dcim/devices/{netbox_id}/",
+                    headers=HEADERS,
+                    timeout=5
+                )
+            except:
+                pass
+
+        raise HTTPException(
+            status_code=500,
+            detail=str(e)
+        )
+
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
 @app.get("/network/traffic")
 async def network_traffic():
     conn = get_connection()
@@ -405,32 +443,46 @@ async def delete_node(node_id: int):
     conn = get_connection()
     cur = conn.cursor()
 
-    cur.execute("SELECT netbox_id FROM nodos WHERE id=%s", (node_id,))
-    row = cur.fetchone()
+    try:
+        cur.execute("SELECT netbox_id FROM nodos WHERE id=%s", (node_id,))
+        row = cur.fetchone()
 
-    if row and row[0]:
-        netbox_id = row[0]
+        if row and row[0]:
+            netbox_id = row[0]
 
-        # 🔥 Eliminar en NetBox
-        nb_res = requests.delete(
-            f"{NETBOX_URL}dcim/devices/{netbox_id}/",
-            headers=HEADERS,
-            timeout=10
-        )
+            nb_res = requests.delete(
+                f"{NETBOX_URL}/dcim/devices/{netbox_id}/",
+                headers=HEADERS,
+                timeout=10,
+                verify=True
+            )
 
-        if not nb_res.ok:
-            return {"status": "error", "message": f"NetBox error: {nb_res.text}"}
+            if nb_res.status_code == 403:
+                raise HTTPException(
+                    status_code=403,
+                    detail="NetBox Cloud bloquea DELETE (plan/trial)"
+                )
 
-    # 🔹 Eliminar enlaces y nodo local
-    cur.execute("DELETE FROM enlaces WHERE origen=%s OR destino=%s", (node_id, node_id))
-    cur.execute("DELETE FROM nodos WHERE id=%s", (node_id,))
+            if nb_res.status_code not in (204, 404):
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"NetBox error {nb_res.status_code}: {nb_res.text}"
+                )
 
-    conn.commit()
-    cur.close()
-    conn.close()
+        # 🔹 Borrado local SOLO si NetBox OK
+        cur.execute("DELETE FROM enlaces WHERE origen=%s OR destino=%s", (node_id, node_id))
+        cur.execute("DELETE FROM nodos WHERE id=%s", (node_id,))
 
-    return {"status": "success"}
+        conn.commit()
+        return {"status": "success"}
 
+    except Exception as e:
+        conn.rollback()
+        raise e
+
+    finally:
+        cur.close()
+        conn.close()
 
 @app.get("/get_nodes")
 async def get_nodes():
