@@ -945,37 +945,41 @@
       function showNodeInfo(node) {
         const panel = document.getElementById("node-info");
 
-        let estadoTexto = "Conectividad operativa";
+        // Estado inicial
+        let estadoTexto = "CONECTIVIDAD OPERATIVA";
         let estadoIcono = "wifi";
         let estadoClase = "text-green-600";
 
+        // Si no hay enlaces activos
         if (!network.getConnectedEdges(node.id).length) {
-          estadoTexto = "Sin enlaces activos";
+          estadoTexto = "SIN ENLACES ACTIVOS";
           estadoIcono = "wifi-off";
           estadoClase = "text-red-600";
         }
 
+        // Mostrar información del nodo
         panel.innerHTML = `
-    <h3 class="flex items-center gap-2">
-      <i data-lucide="server" class="w-5 h-5 text-indigo-600"></i>
-      Información del Nodo
+    <h3 class="flex items-center gap-2 uppercase">
+        <i data-lucide="server" class="w-5 h-5 text-indigo-600"></i>
+        INFORMACIÓN DEL NODO
     </h3>
 
-    <p><strong>Nombre:</strong> ${node.label}</p>
-    <p><strong>Rol:</strong> ${node.rol || "No definido"}</p>
+    <p><strong>Nombre:</strong> ${node.label.toUpperCase()}</p>
+    <p><strong>Rol:</strong> ${(node.rol || "NO DEFINIDO").toUpperCase()}</p>
+    <p><strong>IP:</strong> ${(node.ip || "NO DEFINIDA").toUpperCase()}</p>
+    <p><strong>Ubicación:</strong> ${(node.ubicacion || "NO DEFINIDA").toUpperCase()}</p>
 
     <p class="flex items-center gap-2">
-      <strong>Estado:</strong>
-      <i data-lucide="${estadoIcono}" class="w-4 h-4 ${estadoClase}"></i>
-      <span class="${estadoClase}">${estadoTexto}</span>
+        <strong>Estado:</strong>
+        <i data-lucide="${estadoIcono}" class="w-4 h-4 ${estadoClase}"></i>
+        <span class="${estadoClase} uppercase">${estadoTexto}</span>
     </p>
 
     <p><strong>Descripción:</strong>
-      Este nodo representa un dispositivo dentro de la topología lógica de la red.
-      Su estado es determinado dinámicamente a partir de la disponibilidad de
-      enlaces activos.
+        Este nodo representa un dispositivo dentro de la topología lógica de la red.
+        Su estado se determina dinámicamente a partir de la disponibilidad de enlaces activos.
     </p>
-  `;
+    `;
 
         lucide.createIcons();
       }
