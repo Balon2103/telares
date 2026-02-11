@@ -748,7 +748,8 @@ async def list_backups():
 @app.get("/netbox_api/get_netvis_data")
 async def get_netvis_data():
     """
-    Devuelve nodos y enlaces desde NetBox en formato compatible con NetVis.
+    Devuelve nodos y enlaces desde NetBox en formato compatible con NetVis,
+    incluyendo rol, IP y ubicación.
     """
     try:
         # 🔹 Obtener dispositivos (devices)
@@ -762,14 +763,18 @@ async def get_netvis_data():
         nodes = []
         for d in devices:
             # Obtener modelo o asignar 'desconocido'
-            rol = (d.get("device_type", {}).get("model") or "desconocido").lower()
-            device_name = d.get("name") or f"Dispositivo {d.get('id')}"
-            
+            rol = (d.get("device_type", {}).get("model") or "DESCONOCIDO").upper()
+            device_name = (d.get("name") or f"Dispositivo {d.get('id')}").upper()
+            ip = (d.get("primary_ip4", {}).get("address") if d.get("primary_ip4") else "NO DEFINIDA")
+            ubicacion = (d.get("site", {}).get("name") or "NO DEFINIDA").upper()
+
             nodes.append({
                 "id": d.get("id"),
                 "label": device_name,
-                "rol": rol,  # ⚡ Importante: frontend espera 'rol', no 'role'
-                "title": f"{device_name} ({rol})",
+                "rol": rol,        # ⚡ Frontend espera 'rol'
+                "ip": ip,
+                "ubicacion": ubicacion,
+                "title": f"{device_name}<br>IP: {ip}<br>Ubicación: {ubicacion}",
                 "x": 0,  # posición inicial
                 "y": 0,
                 "fixed": False  # vis.js ajustará automáticamente si no se mueve
@@ -805,6 +810,7 @@ async def get_netvis_data():
             "nodes": [],
             "edges": []
         })
+
 @app.get("/netbox_test")
 def netbox_test():
     r = requests.get(
