@@ -769,16 +769,16 @@ async def get_netvis_data():
             ubicacion = (d.get("site", {}).get("name") or "NO DEFINIDA").upper()
 
             nodes.append({
-                "id": d.get("id"),
-                "label": device_name,
-                "rol": rol,        # ⚡ Frontend espera 'rol'
-                "ip": ip,
-                "ubicacion": ubicacion,
-                "title": f"{device_name}<br>IP: {ip}<br>Ubicación: {ubicacion}",
-                "x": 0,  # posición inicial
-                "y": 0,
-                "fixed": False  # vis.js ajustará automáticamente si no se mueve
-            })
+    "id": d.get("id"),
+    "label": device_name,
+    "rol": d.get("rol") or "desconocido",
+    "ip": d.get("ip") or "desconocida",
+    "ubicacion": d.get("ubicacion") or "desconocida",
+    "title": f"{device_name} ({d.get('rol','desconocido')})",
+    "x": 0,
+    "y": 0,
+    "fixed": False
+})
 
         # 🔹 Obtener cables (links)
         cables_res = requests.get(
